@@ -47,7 +47,7 @@ export default function UploadPage() {
       <form onSubmit={onSubmit} className="space-y-4">
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-600">{error}</p>}
 
-        <label className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-zinc-300 bg-white text-zinc-400 hover:border-indigo-400">
+        <label className="flex aspect-square cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-indigo-400">
           {preview ? (
             preview.isVideo ? (
               <video src={preview.url} className="h-full w-full object-contain bg-black" controls />
@@ -69,7 +69,7 @@ export default function UploadPage() {
           placeholder="Write a caption…"
           rows={3}
           maxLength={2200}
-          className="w-full rounded-xl border border-zinc-300 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          className="w-full rounded-xl border border-zinc-700 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
         />
 
         <button type="submit" disabled={busy} className="w-full rounded-xl bg-indigo-600 py-2.5 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60">

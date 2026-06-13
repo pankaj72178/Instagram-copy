@@ -44,7 +44,7 @@ function LoginForm() {
         </p>
       )}
       <div>
-        <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-700">
+        <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-200">
           Email
         </label>
         <input
@@ -52,13 +52,13 @@ function LoginForm() {
           type="email"
           autoComplete="email"
           {...register("email")}
-          className="w-full rounded-xl border border-zinc-300 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          className="w-full rounded-xl border border-zinc-700 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
           placeholder="you@example.com"
         />
         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
       </div>
       <div>
-        <label htmlFor="password" className="mb-1 block text-sm font-medium text-zinc-700">
+        <label htmlFor="password" className="mb-1 block text-sm font-medium text-zinc-200">
           Password
         </label>
         <input
@@ -66,7 +66,7 @@ function LoginForm() {
           type="password"
           autoComplete="current-password"
           {...register("password")}
-          className="w-full rounded-xl border border-zinc-300 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          className="w-full rounded-xl border border-zinc-700 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
           placeholder="••••••••"
         />
         {errors.password && (
@@ -86,9 +86,9 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl ring-1 ring-zinc-100">
-        <h1 className="text-center text-3xl font-extrabold tracking-tight text-indigo-600">
+    <main className="flex flex-1 items-center justify-center bg-zinc-950 p-6">
+      <div className="w-full max-w-sm rounded-2xl bg-zinc-900 p-8 shadow-xl ring-1 ring-zinc-800">
+        <h1 className="text-center text-3xl font-extrabold tracking-tight text-indigo-400">
           Folo
         </h1>
         <p className="mb-6 mt-1 text-center text-sm text-zinc-500">Welcome back</p>
@@ -98,11 +98,11 @@ export default function LoginPage() {
         <GoogleSignIn />
         <p className="mt-6 text-center text-sm text-zinc-500">
           No account?{" "}
-          <Link href="/signup" className="font-semibold text-indigo-600 hover:underline">
+          <Link href="/signup" className="font-semibold text-indigo-400 hover:underline">
             Sign up
           </Link>
         </p>
-        <p className="mt-4 rounded-lg bg-zinc-50 p-3 text-center text-xs text-zinc-500">
+        <p className="mt-4 rounded-lg bg-zinc-950 p-3 text-center text-xs text-zinc-500">
           Demo: <b>ava@folo.test</b> / <b>password123</b>
         </p>
       </div>

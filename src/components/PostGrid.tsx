@@ -14,7 +14,7 @@ export default function PostGrid({ posts }: { posts: GridPost[] }) {
         <Link
           key={p.id}
           href={`/post/${p.id}`}
-          className="relative aspect-square overflow-hidden rounded-md bg-zinc-100"
+          className="relative aspect-square overflow-hidden rounded-md bg-zinc-800"
         >
           {p.mediaType === "VIDEO" ? (
             <>

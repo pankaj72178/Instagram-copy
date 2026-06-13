@@ -62,7 +62,7 @@ export default function FollowButton({
       className={`rounded-lg px-5 py-1.5 text-sm font-semibold transition disabled:opacity-60 ${
         primary
           ? "bg-indigo-600 text-white hover:bg-indigo-700"
-          : "bg-zinc-100 text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-200"
+          : "bg-zinc-800 text-zinc-100 ring-1 ring-zinc-800 hover:bg-zinc-700"
       }`}
     >
       {busy ? "…" : label}

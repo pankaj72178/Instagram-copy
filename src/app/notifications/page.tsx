@@ -69,7 +69,7 @@ export default async function NotificationsPage() {
                 </span>
                 <Link href={`/post/${l.post.id}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={l.post.mediaUrl} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-zinc-200" />
+                  <img src={l.post.mediaUrl} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-zinc-800" />
                 </Link>
                 <span className="text-xs text-zinc-400">{timeAgo(l.createdAt)}</span>
               </li>
@@ -83,10 +83,10 @@ export default async function NotificationsPage() {
 
 function UserAvatar({ url, username }: { url: string | null; username: string }) {
   if (url) {
-    return <Image src={url} alt={username} width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover ring-1 ring-zinc-200" />;
+    return <Image src={url} alt={username} width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover ring-1 ring-zinc-800" />;
   }
   return (
-    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-600">
+    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-950 font-bold text-indigo-400">
       {username[0]?.toUpperCase()}
     </span>
   );

@@ -46,5 +46,5 @@ next-env.d.ts
 /prisma/*.db
 /prisma/*.db-journal
 /src/generated
-/public/uploads/*
-!/public/uploads/.gitkeep
+# NOTE: /public/uploads IS committed so the seeded demo images deploy to Vercel.
+# Real user uploads go to Vercel Blob in production (see src/lib/storage.ts).

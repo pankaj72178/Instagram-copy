@@ -39,7 +39,7 @@ export default function Feed({
         <button
           onClick={loadMore}
           disabled={loading}
-          className="mx-auto block rounded-xl bg-white px-5 py-2.5 text-sm font-semibold ring-1 ring-zinc-200 hover:bg-zinc-100 disabled:opacity-60"
+          className="mx-auto block rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-800 disabled:opacity-60"
         >
           {loading ? "Loading…" : "Load more"}
         </button>

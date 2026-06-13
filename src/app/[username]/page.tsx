@@ -58,10 +58,10 @@ export default async function ProfilePage({
             width={88}
             height={88}
             unoptimized
-            className="h-20 w-20 rounded-full object-cover ring-1 ring-zinc-200 sm:h-24 sm:w-24"
+            className="h-20 w-20 rounded-full object-cover ring-1 ring-zinc-800 sm:h-24 sm:w-24"
           />
         ) : (
-          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-100 text-3xl font-bold text-indigo-600 sm:h-24 sm:w-24">
+          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-950 text-3xl font-bold text-indigo-400 sm:h-24 sm:w-24">
             {user.username[0]?.toUpperCase()}
           </span>
         )}
@@ -70,14 +70,14 @@ export default async function ProfilePage({
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl font-semibold">{user.username}</h1>
             {user.isPrivate && (
-              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
+              <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-500">
                 🔒 Private
               </span>
             )}
             {isSelf ? (
               <Link
                 href="/settings"
-                className="rounded-lg bg-zinc-100 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-200 hover:bg-zinc-200"
+                className="rounded-lg bg-zinc-800 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700"
               >
                 Edit profile
               </Link>
@@ -100,10 +100,10 @@ export default async function ProfilePage({
 
       <div className="mt-4">
         <p className="font-semibold">{user.displayName}</p>
-        {user.bio && <p className="mt-1 whitespace-pre-line text-sm text-zinc-600">{user.bio}</p>}
+        {user.bio && <p className="mt-1 whitespace-pre-line text-sm text-zinc-300">{user.bio}</p>}
       </div>
 
-      <hr className="my-6 border-zinc-200" />
+      <hr className="my-6 border-zinc-800" />
 
       {/* Posts or private gate */}
       {canView ? (

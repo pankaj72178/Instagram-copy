@@ -24,9 +24,9 @@ export default function Nav({ user }: { user: NavUser | null }) {
   return (
     <>
       {/* Top bar (desktop) */}
-      <header className="sticky top-0 z-40 hidden border-b border-zinc-200 bg-white/90 backdrop-blur md:block">
+      <header className="sticky top-0 z-40 hidden border-b border-zinc-800 bg-zinc-900/90 backdrop-blur md:block">
         <nav className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-extrabold tracking-tight text-indigo-600">
+          <Link href="/" className="text-xl font-extrabold tracking-tight text-indigo-400">
             Folo
           </Link>
           <div className="flex items-center gap-1">
@@ -35,7 +35,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
                 key={l.href}
                 href={l.href}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive(l.href) ? "bg-indigo-50 text-indigo-600" : "text-zinc-600 hover:bg-zinc-100"
+                  isActive(l.href) ? "bg-indigo-950 text-indigo-400" : "text-zinc-300 hover:bg-zinc-800"
                 }`}
               >
                 <l.icon className="h-5 w-5" />
@@ -45,24 +45,24 @@ export default function Nav({ user }: { user: NavUser | null }) {
             <Link
               href={`/${user.username}`}
               className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition ${
-                pathname === `/${user.username}` ? "bg-indigo-50" : "hover:bg-zinc-100"
+                pathname === `/${user.username}` ? "bg-indigo-950" : "hover:bg-zinc-800"
               }`}
             >
               <Avatar url={user.avatarUrl} username={user.username} />
             </Link>
-            <LogoutButton className="ml-1 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-100" />
+            <LogoutButton className="ml-1 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 hover:bg-zinc-800" />
           </div>
         </nav>
       </header>
 
       {/* Bottom bar (mobile) */}
-      <nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-zinc-200 bg-white/95 px-2 py-2 backdrop-blur md:hidden">
+      <nav className="fixed bottom-0 left-0 z-40 flex w-full items-center justify-around border-t border-zinc-800 bg-zinc-900/95 px-2 py-2 backdrop-blur md:hidden">
         {links.map((l) => (
           <Link
             key={l.href}
             href={l.href}
             aria-label={l.label}
-            className={`rounded-lg p-2 ${isActive(l.href) ? "text-indigo-600" : "text-zinc-500"}`}
+            className={`rounded-lg p-2 ${isActive(l.href) ? "text-indigo-400" : "text-zinc-500"}`}
           >
             <l.icon className="h-6 w-6" />
           </Link>
@@ -83,13 +83,13 @@ function Avatar({ url, username }: { url: string | null; username: string }) {
         alt={username}
         width={28}
         height={28}
-        className="h-7 w-7 rounded-full object-cover ring-1 ring-zinc-200"
+        className="h-7 w-7 rounded-full object-cover ring-1 ring-zinc-800"
         unoptimized
       />
     );
   }
   return (
-    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-950 text-xs font-bold text-indigo-400">
       {username[0]?.toUpperCase()}
     </span>
   );

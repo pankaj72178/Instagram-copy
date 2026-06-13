@@ -26,7 +26,7 @@ export default async function PostPage({
       <main className="mx-auto w-full max-w-xl flex-1 px-4 py-16 text-center">
         <p className="text-2xl">🔒</p>
         <p className="mt-2 font-semibold">This post is from a private account</p>
-        <Link href="/" className="mt-3 inline-block text-sm text-indigo-600 hover:underline">Back home</Link>
+        <Link href="/" className="mt-3 inline-block text-sm text-indigo-400 hover:underline">Back home</Link>
       </main>
     );
   }

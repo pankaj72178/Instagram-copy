@@ -55,7 +55,7 @@ export default function GoogleSignIn() {
   return (
     <div className="my-4">
       <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-wide text-zinc-400">
-        <span className="h-px flex-1 bg-zinc-200" /> or <span className="h-px flex-1 bg-zinc-200" />
+        <span className="h-px flex-1 bg-zinc-700" /> or <span className="h-px flex-1 bg-zinc-700" />
       </div>
       <div ref={ref} className="flex justify-center" />
     </div>

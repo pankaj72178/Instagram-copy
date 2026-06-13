@@ -34,12 +34,12 @@ export default function SignupPage() {
   }
 
   const inputCls =
-    "w-full rounded-xl border border-zinc-300 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
+    "w-full rounded-xl border border-zinc-700 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl ring-1 ring-zinc-100">
-        <h1 className="text-center text-3xl font-extrabold tracking-tight text-indigo-600">
+    <main className="flex flex-1 items-center justify-center bg-zinc-950 p-6">
+      <div className="w-full max-w-sm rounded-2xl bg-zinc-900 p-8 shadow-xl ring-1 ring-zinc-800">
+        <h1 className="text-center text-3xl font-extrabold tracking-tight text-indigo-400">
           Folo
         </h1>
         <p className="mb-6 mt-1 text-center text-sm text-zinc-500">Create your account</p>
@@ -51,7 +51,7 @@ export default function SignupPage() {
             </p>
           )}
           <div>
-            <label htmlFor="displayName" className="mb-1 block text-sm font-medium text-zinc-700">
+            <label htmlFor="displayName" className="mb-1 block text-sm font-medium text-zinc-200">
               Display name
             </label>
             <input id="displayName" {...register("displayName")} className={inputCls} placeholder="Ava Stone" />
@@ -60,7 +60,7 @@ export default function SignupPage() {
             )}
           </div>
           <div>
-            <label htmlFor="username" className="mb-1 block text-sm font-medium text-zinc-700">
+            <label htmlFor="username" className="mb-1 block text-sm font-medium text-zinc-200">
               Username
             </label>
             <input id="username" {...register("username")} className={inputCls} placeholder="ava" />
@@ -69,14 +69,14 @@ export default function SignupPage() {
             )}
           </div>
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-700">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-zinc-200">
               Email
             </label>
             <input id="email" type="email" {...register("email")} className={inputCls} placeholder="you@example.com" />
             {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
           </div>
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-zinc-700">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-zinc-200">
               Password
             </label>
             <input id="password" type="password" {...register("password")} className={inputCls} placeholder="At least 6 characters" />
@@ -97,7 +97,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm text-zinc-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-indigo-600 hover:underline">
+          <Link href="/login" className="font-semibold text-indigo-400 hover:underline">
             Log in
           </Link>
         </p>

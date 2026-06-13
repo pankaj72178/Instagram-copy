@@ -1,7 +1,10 @@
 // =====================================================================
-// Storage module (isolated) — saves uploaded media to the local filesystem
-// under /public/uploads for development. To switch to S3/Cloudinary later,
-// reimplement saveMedia()/deleteMedia() here; nothing else needs to change.
+// Storage module (isolated). Two backends, chosen automatically:
+//   • Vercel Blob  — used when BLOB_READ_WRITE_TOKEN is set (works on Vercel,
+//     where the filesystem is read-only). Media persists across deploys.
+//   • Local filesystem (/public/uploads) — used in local dev when no Blob
+//     token is present.
+// Swapping to S3/Cloudinary later = reimplement just these two functions.
 // =====================================================================
 import "server-only";
 import { writeFile, mkdir, unlink } from "node:fs/promises";
@@ -9,6 +12,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 
 const UPLOAD_DIR = join(process.cwd(), "public", "uploads");
+const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
 
 const EXT: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -21,29 +25,41 @@ const EXT: Record<string, string> = {
 
 export type SavedMedia = { url: string };
 
-/**
- * Persist an uploaded File and return its public URL (e.g. "/uploads/abc.jpg").
- */
 export async function saveMedia(file: File): Promise<SavedMedia> {
   const ext = EXT[file.type] ?? "bin";
   const name = `${randomUUID()}.${ext}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
 
+  if (useBlob) {
+    // Dynamic import so local dev never needs the package configured.
+    const { put } = await import("@vercel/blob");
+    const blob = await put(`uploads/${name}`, file, {
+      access: "public",
+      contentType: file.type,
+      addRandomSuffix: false,
+    });
+    return { url: blob.url };
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
   await mkdir(UPLOAD_DIR, { recursive: true });
   await writeFile(join(UPLOAD_DIR, name), bytes);
-
   return { url: `/uploads/${name}` };
 }
 
-/**
- * Delete a previously-saved media file by its public URL. Best-effort.
- */
 export async function deleteMedia(url: string): Promise<void> {
-  if (!url.startsWith("/uploads/")) return;
-  const name = url.replace("/uploads/", "");
   try {
-    await unlink(join(UPLOAD_DIR, name));
+    if (url.startsWith("http")) {
+      // Blob (or remote) URL.
+      if (useBlob) {
+        const { del } = await import("@vercel/blob");
+        await del(url);
+      }
+      return;
+    }
+    if (url.startsWith("/uploads/")) {
+      await unlink(join(UPLOAD_DIR, url.replace("/uploads/", "")));
+    }
   } catch {
-    // file may already be gone — ignore
+    // already gone / not deletable — ignore
   }
 }

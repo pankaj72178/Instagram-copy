@@ -42,9 +42,9 @@ export default function FollowRequests({ requests }: { requests: Req[] }) {
         <li key={r.id} className="flex items-center gap-3">
           <Link href={`/${r.follower.username}`}>
             {r.follower.avatarUrl ? (
-              <Image src={r.follower.avatarUrl} alt={r.follower.username} width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover ring-1 ring-zinc-200" />
+              <Image src={r.follower.avatarUrl} alt={r.follower.username} width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover ring-1 ring-zinc-800" />
             ) : (
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-950 font-bold text-indigo-400">
                 {r.follower.username[0]?.toUpperCase()}
               </span>
             )}
@@ -56,7 +56,7 @@ export default function FollowRequests({ requests }: { requests: Req[] }) {
           <button onClick={() => act(r.id, "accept")} disabled={busy === r.id} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
             Accept
           </button>
-          <button onClick={() => act(r.id, "reject")} disabled={busy === r.id} className="rounded-lg bg-zinc-100 px-3 py-1.5 text-sm font-semibold ring-1 ring-zinc-200 hover:bg-zinc-200 disabled:opacity-60">
+          <button onClick={() => act(r.id, "reject")} disabled={busy === r.id} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700 disabled:opacity-60">
             Reject
           </button>
         </li>

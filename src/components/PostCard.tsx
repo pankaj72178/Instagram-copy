@@ -74,7 +74,7 @@ export default function PostCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
+    <article className="overflow-hidden rounded-2xl bg-zinc-900 ring-1 ring-zinc-800">
       {/* header */}
       <div className="flex items-center gap-3 p-3">
         <Link href={`/${post.author.username}`} className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export default function PostCard({
       </div>
 
       {/* media */}
-      <div className="bg-zinc-100">
+      <div className="bg-zinc-800">
         {post.mediaType === "VIDEO" ? (
           <video src={post.mediaUrl} controls playsInline className="max-h-[70vh] w-full bg-black object-contain" />
         ) : (
@@ -103,11 +103,11 @@ export default function PostCard({
       <div className="px-3 pt-3">
         <div className="flex items-center gap-4">
           <button onClick={toggleLike} aria-label={liked ? "Unlike" : "Like"} className="flex items-center gap-1.5">
-            <svg viewBox="0 0 24 24" className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "fill-none text-zinc-700"}`} stroke="currentColor" strokeWidth="2">
+            <svg viewBox="0 0 24 24" className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "fill-none text-zinc-200"}`} stroke="currentColor" strokeWidth="2">
               <path d="M12 21s-7-4.6-9.3-9.2C1 8.5 2.7 5 6 5c2 0 3.2 1.2 4 2.3C10.8 6.2 12 5 14 5c3.3 0 5 3.5 3.3 6.8C19 16.4 12 21 12 21z" />
             </svg>
           </button>
-          <Link href={`/post/${post.id}`} aria-label="Comments" className="flex items-center gap-1.5 text-zinc-700">
+          <Link href={`/post/${post.id}`} aria-label="Comments" className="flex items-center gap-1.5 text-zinc-200">
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-5.2A8.5 8.5 0 1 1 21 11.5z" />
             </svg>
@@ -151,9 +151,9 @@ export default function PostCard({
             onChange={(e) => setText(e.target.value)}
             placeholder="Add a comment…"
             maxLength={500}
-            className="flex-1 rounded-full bg-zinc-100 px-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
+            className="flex-1 rounded-full bg-zinc-800 px-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
           />
-          <button type="submit" disabled={busy || !text.trim()} className="text-sm font-semibold text-indigo-600 disabled:opacity-40">
+          <button type="submit" disabled={busy || !text.trim()} className="text-sm font-semibold text-indigo-400 disabled:opacity-40">
             Post
           </button>
         </form>
@@ -164,10 +164,10 @@ export default function PostCard({
 
 function Avatar({ url, username }: { url: string | null; username: string }) {
   if (url) {
-    return <Image src={url} alt={username} width={32} height={32} unoptimized className="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-200" />;
+    return <Image src={url} alt={username} width={32} height={32} unoptimized className="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-800" />;
   }
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-950 text-xs font-bold text-indigo-400">
       {username[0]?.toUpperCase()}
     </span>
   );

@@ -11,14 +11,14 @@ export default async function Home() {
   if (!user) {
     return (
       <main className="flex flex-1 items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 p-6 text-white">
-        <div className="w-full max-w-md rounded-3xl bg-white/10 p-10 text-center ring-1 ring-white/20 backdrop-blur-xl">
+        <div className="w-full max-w-md rounded-3xl bg-zinc-900/10 p-10 text-center ring-1 ring-white/20 backdrop-blur-xl">
           <h1 className="text-5xl font-extrabold tracking-tight">Folo</h1>
           <p className="mt-3 text-white/85">Share moments with the people you follow.</p>
           <div className="mt-8 flex flex-col gap-3">
-            <Link href="/login" className="rounded-xl bg-white py-2.5 font-semibold text-indigo-600 transition hover:bg-white/90">
+            <Link href="/login" className="rounded-xl bg-zinc-900 py-2.5 font-semibold text-indigo-400 transition hover:bg-zinc-900/90">
               Log in
             </Link>
-            <Link href="/signup" className="rounded-xl bg-white/15 py-2.5 font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/25">
+            <Link href="/signup" className="rounded-xl bg-zinc-900/15 py-2.5 font-semibold text-white ring-1 ring-white/30 transition hover:bg-zinc-900/25">
               Create account
             </Link>
           </div>
@@ -40,13 +40,13 @@ export default async function Home() {
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
       {page.length === 0 ? (
-        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-zinc-200">
+        <div className="rounded-2xl bg-zinc-900 p-10 text-center ring-1 ring-zinc-800">
           <p className="text-lg font-semibold">Your feed is empty</p>
           <p className="mt-1 text-sm text-zinc-500">
             Follow people on{" "}
-            <Link href="/explore" className="font-semibold text-indigo-600 hover:underline">Explore</Link>{" "}
+            <Link href="/explore" className="font-semibold text-indigo-400 hover:underline">Explore</Link>{" "}
             or{" "}
-            <Link href="/upload" className="font-semibold text-indigo-600 hover:underline">share your first post</Link>.
+            <Link href="/upload" className="font-semibold text-indigo-400 hover:underline">share your first post</Link>.
           </p>
         </div>
       ) : (

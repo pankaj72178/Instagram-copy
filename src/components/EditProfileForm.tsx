@@ -47,7 +47,7 @@ export default function EditProfileForm({ initial }: { initial: Initial }) {
   }
 
   const inputCls =
-    "w-full rounded-xl border border-zinc-300 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
+    "w-full rounded-xl border border-zinc-700 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
@@ -55,22 +55,22 @@ export default function EditProfileForm({ initial }: { initial: Initial }) {
       {saved && <p className="rounded-lg bg-green-50 p-3 text-sm font-medium text-green-700">Profile saved ✓</p>}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700">Display name</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-200">Display name</label>
         <input className={inputCls} value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={50} required />
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700">Bio</label>
+        <label className="mb-1 block text-sm font-medium text-zinc-200">Bio</label>
         <textarea className={inputCls} rows={3} value={bio} onChange={(e) => setBio(e.target.value)} maxLength={160} placeholder="Tell people about yourself" />
         <p className="mt-1 text-right text-xs text-zinc-400">{bio.length}/160</p>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700">Avatar</label>
-        <input type="file" accept="image/*" onChange={(e) => setAvatar(e.target.files?.[0] ?? null)} className="block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-600" />
+        <label className="mb-1 block text-sm font-medium text-zinc-200">Avatar</label>
+        <input type="file" accept="image/*" onChange={(e) => setAvatar(e.target.files?.[0] ?? null)} className="block w-full text-sm text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-950 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-400" />
       </div>
 
-      <label className="flex cursor-pointer items-center justify-between rounded-xl bg-zinc-50 p-4 ring-1 ring-zinc-200">
+      <label className="flex cursor-pointer items-center justify-between rounded-xl bg-zinc-950 p-4 ring-1 ring-zinc-800">
         <span>
           <span className="block font-medium">Private account</span>
           <span className="block text-sm text-zinc-500">Only approved followers can see your posts.</span>
