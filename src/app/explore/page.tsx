@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import PostGrid from "@/components/PostGrid";
 
+// Always render at request time (never prerender at build → no DB needed during build).
+export const dynamic = "force-dynamic";
+
 // Explore — recent posts from PUBLIC accounts only.
 export default async function ExplorePage() {
   const posts = await prisma.post.findMany({

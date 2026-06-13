@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   description: "Folo — share moments with the people you follow.",
 };
 
+// Folo is personalized + real-time — render everything at request time so the
+// build never queries the database (avoids build-time DB failures on Vercel).
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
