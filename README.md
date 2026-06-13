@@ -1,5 +1,7 @@
 # 📸 Folo
 
+Access Link: https://instagram-copy-beta.vercel.app
+
 **Folo** is a full-stack, Instagram-style social media app — share photos and videos, follow people (with public/private accounts + follow requests), like and comment, and browse a personalized feed. Built with original branding.
 
 > ⚠️ Built **incrementally, phase by phase.** See [Build progress](#-build-progress) for what's done so far.
