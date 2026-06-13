@@ -1,64 +1,51 @@
 // =====================================================================
-// Storage module (isolated). Two backends, chosen automatically:
-//   • Vercel Blob  — used when BLOB_READ_WRITE_TOKEN is set (works on Vercel,
-//     where the filesystem is read-only). Media persists across deploys.
-//   • Local filesystem (/public/uploads) — used in local dev when no Blob
-//     token is present.
-// Swapping to S3/Cloudinary later = reimplement just these two functions.
+// Storage module (isolated). Picks a backend automatically:
+//   1. Vercel Blob   — if BLOB_READ_WRITE_TOKEN is set (best: CDN-backed).
+//   2. MongoDB       — otherwise: stores bytes in the DB and serves them via
+//      /api/media/[id]. Works on Vercel's read-only filesystem with NO extra
+//      setup (uses the database you already have).
+// Swap to S3/Cloudinary later by reimplementing just these two functions.
 // =====================================================================
 import "server-only";
-import { writeFile, mkdir, unlink } from "node:fs/promises";
-import { join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { prisma } from "@/lib/prisma";
 
-const UPLOAD_DIR = join(process.cwd(), "public", "uploads");
 const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
-
-const EXT: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "video/mp4": "mp4",
-  "video/webm": "webm",
-};
 
 export type SavedMedia = { url: string };
 
 export async function saveMedia(file: File): Promise<SavedMedia> {
-  const ext = EXT[file.type] ?? "bin";
-  const name = `${randomUUID()}.${ext}`;
-
   if (useBlob) {
-    // Dynamic import so local dev never needs the package configured.
     const { put } = await import("@vercel/blob");
-    const blob = await put(`uploads/${name}`, file, {
+    const { randomUUID } = await import("node:crypto");
+    const blob = await put(`uploads/${randomUUID()}`, file, {
       access: "public",
       contentType: file.type,
-      addRandomSuffix: false,
+      addRandomSuffix: true,
     });
     return { url: blob.url };
   }
 
+  // Store the bytes in MongoDB; serve them back through /api/media/[id].
   const bytes = Buffer.from(await file.arrayBuffer());
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(join(UPLOAD_DIR, name), bytes);
-  return { url: `/uploads/${name}` };
+  const media = await prisma.media.create({
+    data: { data: bytes, contentType: file.type },
+    select: { id: true },
+  });
+  return { url: `/api/media/${media.id}` };
 }
 
 export async function deleteMedia(url: string): Promise<void> {
   try {
-    if (url.startsWith("http")) {
-      // Blob (or remote) URL.
-      if (useBlob) {
-        const { del } = await import("@vercel/blob");
-        await del(url);
-      }
+    if (url.startsWith("/api/media/")) {
+      const id = url.replace("/api/media/", "");
+      await prisma.media.delete({ where: { id } });
       return;
     }
-    if (url.startsWith("/uploads/")) {
-      await unlink(join(UPLOAD_DIR, url.replace("/uploads/", "")));
+    if (url.startsWith("http") && useBlob) {
+      const { del } = await import("@vercel/blob");
+      await del(url);
     }
+    // "/uploads/..." (committed seed assets) are left in place.
   } catch {
     // already gone / not deletable — ignore
   }

@@ -91,3 +91,13 @@ model Comment {
 
   @@index([postId])
 }
+
+// Uploaded media stored directly in MongoDB (works on Vercel's read-only FS
+// with zero extra setup). Served back via /api/media/[id]. The post/feed
+// queries only store a small "/api/media/<id>" URL, never the bytes.
+model Media {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  data        Bytes
+  contentType String
+  createdAt   DateTime @default(now())
+}

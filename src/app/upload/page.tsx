@@ -75,7 +75,7 @@ export default function UploadPage() {
         <button type="submit" disabled={busy} className="w-full rounded-xl bg-indigo-600 py-2.5 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60">
           {busy ? "Sharing…" : "Share"}
         </button>
-        <p className="text-center text-xs text-zinc-400">Images up to 8MB (jpg/png/webp/gif) · Videos up to 50MB (mp4/webm)</p>
+        <p className="text-center text-xs text-zinc-400">Images up to 8MB (jpg/png/webp/gif) · Videos up to 14MB (mp4/webm)</p>
       </form>
     </main>
   );
