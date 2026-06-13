@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import PostGrid from "@/components/PostGrid";
+import SearchBox from "@/components/SearchBox";
 
 // Always render at request time (never prerender at build → no DB needed during build).
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export default async function ExplorePage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
       <h1 className="mb-4 text-xl font-bold">Explore</h1>
+      <SearchBox />
       {posts.length === 0 ? (
         <p className="py-16 text-center text-sm text-zinc-400">No public posts yet.</p>
       ) : (

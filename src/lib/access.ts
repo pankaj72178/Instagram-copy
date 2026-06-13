@@ -47,6 +47,24 @@ export async function canViewContent(
   return state === "following";
 }
 
+/** Viewer's follow state toward many users at once (for lists/search). */
+export async function followStatesFor(
+  viewerId: string | null,
+  ids: string[]
+): Promise<Record<string, FollowState>> {
+  const out: Record<string, FollowState> = {};
+  for (const id of ids) out[id] = viewerId === id ? "self" : "none";
+  if (!viewerId || ids.length === 0) return out;
+  const rows = await prisma.follow.findMany({
+    where: { followerId: viewerId, followingId: { in: ids } },
+    select: { followingId: true, status: true },
+  });
+  for (const r of rows) {
+    out[r.followingId] = r.status === "ACCEPTED" ? "following" : "requested";
+  }
+  return out;
+}
+
 /** IDs of accounts `viewerId` follows (ACCEPTED) — used to build the feed. */
 export async function acceptedFollowingIds(viewerId: string): Promise<string[]> {
   const rows = await prisma.follow.findMany({

@@ -14,6 +14,7 @@ export async function PATCH(req: Request) {
   if (!form) return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
 
   const parsed = updateProfileSchema.safeParse({
+    username: form.get("username"),
     displayName: form.get("displayName"),
     bio: form.get("bio") ?? "",
     isPrivate: form.get("isPrivate") === "true",
@@ -24,7 +25,16 @@ export async function PATCH(req: Request) {
       { status: 400 }
     );
   }
-  const { displayName, bio, isPrivate } = parsed.data;
+  const { username, displayName, bio, isPrivate } = parsed.data;
+
+  // If the username changed, make sure it's still unique.
+  const taken = await prisma.user.findFirst({
+    where: { username, NOT: { id: me } },
+    select: { id: true },
+  });
+  if (taken) {
+    return NextResponse.json({ error: "Username is already taken" }, { status: 409 });
+  }
 
   // Optional avatar
   const avatar = form.get("avatar");
@@ -46,7 +56,7 @@ export async function PATCH(req: Request) {
 
   const user = await prisma.user.update({
     where: { id: me },
-    data: { displayName, bio: bio || null, isPrivate, ...(avatarUrl ? { avatarUrl } : {}) },
+    data: { username, displayName, bio: bio || null, isPrivate, ...(avatarUrl ? { avatarUrl } : {}) },
     select: { username: true, displayName: true, bio: true, isPrivate: true, avatarUrl: true },
   });
 

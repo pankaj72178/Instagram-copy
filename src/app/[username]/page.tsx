@@ -92,8 +92,12 @@ export default async function ProfilePage({
 
           <div className="mt-3 flex gap-6 text-sm">
             <span><b>{postCount}</b> posts</span>
-            <span><b>{followerCount}</b> followers</span>
-            <span><b>{followingCount}</b> following</span>
+            <Link href={`/${user.username}/followers`} className="hover:underline">
+              <b>{followerCount}</b> followers
+            </Link>
+            <Link href={`/${user.username}/following`} className="hover:underline">
+              <b>{followingCount}</b> following
+            </Link>
           </div>
         </div>
       </header>

@@ -13,6 +13,7 @@ type Initial = {
 
 export default function EditProfileForm({ initial }: { initial: Initial }) {
   const router = useRouter();
+  const [username, setUsername] = useState(initial.username);
   const [displayName, setDisplayName] = useState(initial.displayName);
   const [bio, setBio] = useState(initial.bio ?? "");
   const [isPrivate, setIsPrivate] = useState(initial.isPrivate);
@@ -28,6 +29,7 @@ export default function EditProfileForm({ initial }: { initial: Initial }) {
     setBusy(true);
     try {
       const fd = new FormData();
+      fd.set("username", username.trim().toLowerCase());
       fd.set("displayName", displayName);
       fd.set("bio", bio);
       fd.set("isPrivate", String(isPrivate));
@@ -40,6 +42,10 @@ export default function EditProfileForm({ initial }: { initial: Initial }) {
         return;
       }
       setSaved(true);
+      // If the username changed, the profile URL changed too.
+      if (data.user?.username && data.user.username !== initial.username) {
+        router.push(`/${data.user.username}`);
+      }
       router.refresh();
     } finally {
       setBusy(false);
@@ -53,6 +59,22 @@ export default function EditProfileForm({ initial }: { initial: Initial }) {
     <form onSubmit={onSubmit} className="space-y-5">
       {error && <p className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-600">{error}</p>}
       {saved && <p className="rounded-lg bg-green-50 p-3 text-sm font-medium text-green-700">Profile saved ✓</p>}
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-zinc-200">Username (your unique id)</label>
+        <div className="flex items-center gap-1">
+          <span className="text-zinc-500">@</span>
+          <input
+            className={inputCls}
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+            maxLength={20}
+            required
+            pattern="[a-z0-9_]+"
+          />
+        </div>
+        <p className="mt-1 text-xs text-zinc-500">Lowercase letters, numbers, and underscores. Changing it changes your profile link.</p>
+      </div>
 
       <div>
         <label className="mb-1 block text-sm font-medium text-zinc-200">Display name</label>

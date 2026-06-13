@@ -20,6 +20,11 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const updateProfileSchema = z.object({
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(/^[a-z0-9_]+$/, "Use only lowercase letters, numbers, and underscores"),
   displayName: z.string().min(1, "Display name is required").max(50),
   bio: z.string().max(160, "Bio must be at most 160 characters").optional().or(z.literal("")),
   isPrivate: z.boolean(),
