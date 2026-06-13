@@ -43,7 +43,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Caption too long" }, { status: 400 });
   }
 
-  const { url } = await saveMedia(media);
+  let url: string;
+  try {
+    ({ url } = await saveMedia(media));
+  } catch (err) {
+    console.error("saveMedia failed:", err);
+    return NextResponse.json(
+      {
+        error:
+          "Couldn't save the file. On Vercel, create a Blob store so uploads persist (adds BLOB_READ_WRITE_TOKEN).",
+      },
+      { status: 500 }
+    );
+  }
+
   const post = await prisma.post.create({
     data: { authorId: me, mediaUrl: url, mediaType: isImage ? "IMAGE" : "VIDEO", caption },
     select: { id: true },
