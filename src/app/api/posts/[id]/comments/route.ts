@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
 import { canViewContent } from "@/lib/access";
 import { commentSchema } from "@/lib/validation";
+import { rateLimit } from "@/lib/ratelimit";
 
 async function loadViewablePost(id: string, viewerId: string) {
   const post = await prisma.post.findUnique({
@@ -37,6 +38,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 // POST /api/posts/:id/comments — add a comment.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const limited = rateLimit(req, "comment", 30, 60_000); // 30 comments/min per IP
+  if (limited) return limited;
+
   const me = await getSessionUserId();
   if (!me) return NextResponse.json({ error: "Login required" }, { status: 401 });
   const { id } = await params;

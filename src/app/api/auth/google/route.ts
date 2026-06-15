@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import { prisma } from "@/lib/prisma";
 import { setAuthCookie } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -25,6 +26,9 @@ async function uniqueUsername(seed: string): Promise<string> {
 // create the user, then issue our own JWT cookie.
 export async function POST(req: Request) {
   try {
+    const limited = rateLimit(req, "google", 15, 60_000);
+    if (limited) return limited;
+
     const { credential } = (await req.json().catch(() => ({}))) as { credential?: string };
     if (!credential) {
       return NextResponse.json({ error: "Missing Google credential" }, { status: 400 });

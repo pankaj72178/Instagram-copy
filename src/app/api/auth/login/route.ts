@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, setAuthCookie } from "@/lib/auth";
 import { loginSchema } from "@/lib/validation";
+import { rateLimit } from "@/lib/ratelimit";
 
 export async function POST(req: Request) {
   try {
+    const limited = rateLimit(req, "login", 10, 60_000); // 10/min per IP
+    if (limited) return limited;
+
     const body = await req.json().catch(() => null);
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {

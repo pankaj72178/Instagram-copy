@@ -95,6 +95,11 @@ export default function LoginPage() {
         <Suspense fallback={null}>
           <LoginForm />
         </Suspense>
+        <p className="mt-3 text-center text-sm">
+          <Link href="/forgot-password" className="text-zinc-500 hover:text-indigo-400 hover:underline">
+            Forgot password?
+          </Link>
+        </p>
         <GoogleSignIn />
         <p className="mt-6 text-center text-sm text-zinc-500">
           No account?{" "}

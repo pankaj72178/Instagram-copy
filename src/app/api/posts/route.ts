@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
 import { saveMedia } from "@/lib/storage";
+import { sniffMime } from "@/lib/filecheck";
+import { rateLimit } from "@/lib/ratelimit";
 import {
   IMAGE_TYPES,
   VIDEO_TYPES,
@@ -11,6 +13,9 @@ import {
 
 // POST /api/posts — create a post (multipart: `media` file + optional `caption`).
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "upload", 20, 60_000); // 20 posts/min per IP
+  if (limited) return limited;
+
   const me = await getSessionUserId();
   if (!me) return NextResponse.json({ error: "Login required" }, { status: 401 });
 
@@ -24,11 +29,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please choose a photo or video" }, { status: 400 });
   }
 
-  const isImage = IMAGE_TYPES.includes(media.type);
-  const isVideo = VIDEO_TYPES.includes(media.type);
+  // Trust the file's REAL signature, not the client-supplied MIME type.
+  const realType = await sniffMime(media);
+  const isImage = !!realType && IMAGE_TYPES.includes(realType);
+  const isVideo = !!realType && VIDEO_TYPES.includes(realType);
   if (!isImage && !isVideo) {
     return NextResponse.json(
-      { error: "Unsupported file type. Use JPG/PNG/WEBP/GIF or MP4/WEBM." },
+      { error: "Unsupported or invalid file. Use a real JPG/PNG/WEBP/GIF or MP4/WEBM." },
       { status: 400 }
     );
   }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
 import { saveMedia, deleteMedia } from "@/lib/storage";
+import { sniffMime } from "@/lib/filecheck";
 import { updateProfileSchema, IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/validation";
 
 // PATCH /api/profile — update displayName, bio, isPrivate, and optional avatar.
@@ -40,8 +41,9 @@ export async function PATCH(req: Request) {
   const avatar = form.get("avatar");
   let avatarUrl: string | undefined;
   if (avatar instanceof File && avatar.size > 0) {
-    if (!IMAGE_TYPES.includes(avatar.type)) {
-      return NextResponse.json({ error: "Avatar must be an image" }, { status: 400 });
+    const realType = await sniffMime(avatar);
+    if (!realType || !IMAGE_TYPES.includes(realType)) {
+      return NextResponse.json({ error: "Avatar must be a valid image" }, { status: 400 });
     }
     if (avatar.size > MAX_IMAGE_BYTES) {
       return NextResponse.json({ error: "Avatar is too large (max 8MB)" }, { status: 400 });
