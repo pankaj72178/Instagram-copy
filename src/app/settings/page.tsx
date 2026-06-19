@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import EditProfileForm from "@/components/EditProfileForm";
+import AccountActions from "@/components/AccountActions";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -18,6 +19,7 @@ export default async function SettingsPage() {
           avatarUrl: user.avatarUrl,
         }}
       />
+      <AccountActions />
     </main>
   );
 }
