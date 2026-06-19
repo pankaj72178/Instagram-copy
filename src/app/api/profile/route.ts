@@ -54,11 +54,29 @@ export async function PATCH(req: Request) {
     if (me0?.avatarUrl) await deleteMedia(me0.avatarUrl);
   }
 
-  const before = await prisma.user.findUnique({ where: { id: me }, select: { isPrivate: true } });
+  const before = await prisma.user.findUnique({
+    where: { id: me },
+    select: { isPrivate: true, username: true, prevUsernames: true },
+  });
+
+  // If the username changed, remember the old one so old links keep working.
+  const renamed = !!before && before.username !== username;
+  const prevUsernames = renamed
+    ? Array.from(new Set([...before!.prevUsernames, before!.username])).filter(
+        (u) => u !== username
+      )
+    : undefined;
 
   const user = await prisma.user.update({
     where: { id: me },
-    data: { username, displayName, bio: bio || null, isPrivate, ...(avatarUrl ? { avatarUrl } : {}) },
+    data: {
+      username,
+      displayName,
+      bio: bio || null,
+      isPrivate,
+      ...(avatarUrl ? { avatarUrl } : {}),
+      ...(prevUsernames ? { prevUsernames } : {}),
+    },
     select: { username: true, displayName: true, bio: true, isPrivate: true, avatarUrl: true },
   });
 

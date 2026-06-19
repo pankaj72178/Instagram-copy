@@ -26,7 +26,7 @@ async function uniqueUsername(seed: string): Promise<string> {
 // create the user, then issue our own JWT cookie.
 export async function POST(req: Request) {
   try {
-    const limited = rateLimit(req, "google", 15, 60_000);
+    const limited = await rateLimit(req, "google", 15, 60_000);
     if (limited) return limited;
 
     const { credential } = (await req.json().catch(() => ({}))) as { credential?: string };

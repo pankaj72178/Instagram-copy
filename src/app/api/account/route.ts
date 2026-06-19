@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/ratelimit";
 // DELETE /api/account — permanently delete the signed-in user's account
 // and all data they own (posts, likes, comments, follows, uploaded media).
 export async function DELETE(req: Request) {
-  const limited = rateLimit(req, "account-delete", 5, 60_000);
+  const limited = await rateLimit(req, "account-delete", 5, 60_000);
   if (limited) return limited;
 
   const me = await getSessionUserId();

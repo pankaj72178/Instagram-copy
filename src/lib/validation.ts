@@ -39,7 +39,9 @@ export type CommentInput = z.infer<typeof commentSchema>;
 // Allowed media for uploads
 export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 export const VIDEO_TYPES = ["video/mp4", "video/webm"];
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB
+export const MAX_IMAGE_MB = 8;
 // Kept under MongoDB's 16MB document limit (media is stored in the DB unless
 // a Vercel Blob store is configured).
-export const MAX_VIDEO_BYTES = 14 * 1024 * 1024; // 14 MB
+export const MAX_VIDEO_MB = 14;
+export const MAX_IMAGE_BYTES = MAX_IMAGE_MB * 1024 * 1024;
+export const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;

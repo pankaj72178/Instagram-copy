@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: dirname(fileURLToPath(import.meta.url)),
   },
+  // Optimize remote CDN images (Vercel Blob + Google avatars). Same-origin
+  // /api/media and /uploads keep `unoptimized` (set per-<Image> in Avatar).
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+    ],
+  },
 };
 
 export default nextConfig;

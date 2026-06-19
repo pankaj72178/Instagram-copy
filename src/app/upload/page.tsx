@@ -2,6 +2,22 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import {
+  MAX_IMAGE_BYTES,
+  MAX_VIDEO_BYTES,
+  MAX_IMAGE_MB,
+  MAX_VIDEO_MB,
+} from "@/lib/validation";
+
+// Returns an error string if the file is too big, else null.
+function sizeError(file: File): string | null {
+  const isVideo = file.type.startsWith("video/");
+  const max = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  if (file.size > max) {
+    return `That ${isVideo ? "video" : "image"} is ${(file.size / 1024 / 1024).toFixed(1)}MB — the max is ${isVideo ? MAX_VIDEO_MB : MAX_IMAGE_MB}MB.`;
+  }
+  return null;
+}
 
 export default function UploadPage() {
   const router = useRouter();
@@ -15,6 +31,13 @@ export default function UploadPage() {
     setError("");
     const f = e.target.files?.[0];
     if (!f) return setPreview(null);
+    const tooBig = sizeError(f);
+    if (tooBig) {
+      setError(tooBig);
+      setPreview(null);
+      e.target.value = "";
+      return;
+    }
     setPreview({ url: URL.createObjectURL(f), isVideo: f.type.startsWith("video/") });
   }
 
@@ -23,6 +46,8 @@ export default function UploadPage() {
     setError("");
     const file = fileRef.current?.files?.[0];
     if (!file) return setError("Please choose a photo or video.");
+    const tooBig = sizeError(file);
+    if (tooBig) return setError(tooBig);
     setBusy(true);
     try {
       const fd = new FormData();

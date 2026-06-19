@@ -9,11 +9,13 @@ import {
   VIDEO_TYPES,
   MAX_IMAGE_BYTES,
   MAX_VIDEO_BYTES,
+  MAX_IMAGE_MB,
+  MAX_VIDEO_MB,
 } from "@/lib/validation";
 
 // POST /api/posts — create a post (multipart: `media` file + optional `caption`).
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "upload", 20, 60_000); // 20 posts/min per IP
+  const limited = await rateLimit(req, "upload", 20, 60_000); // 20 posts/min per IP
   if (limited) return limited;
 
   const me = await getSessionUserId();
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
   const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
   if (media.size > maxBytes) {
     return NextResponse.json(
-      { error: `File too large (max ${isImage ? "8MB" : "50MB"})` },
+      { error: `File too large. Max ${isImage ? MAX_IMAGE_MB : MAX_VIDEO_MB}MB for ${isImage ? "images" : "videos"}.` },
       { status: 400 }
     );
   }

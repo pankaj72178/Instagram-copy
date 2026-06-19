@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/ratelimit";
 // POST /api/auth/forgot-password { email }
 // Always responds the same way (don't reveal whether the email exists).
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "forgot", 5, 60_000);
+  const limited = await rateLimit(req, "forgot", 5, 60_000);
   if (limited) return limited;
 
   const { email } = (await req.json().catch(() => ({}))) as { email?: string };

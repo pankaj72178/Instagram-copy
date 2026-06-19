@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { timeAgo } from "@/lib/format";
+import { useToast } from "@/components/Toast";
+import Avatar from "@/components/Avatar";
+import Lightbox from "@/components/Lightbox";
 import type { PostCardData, CommentItem } from "@/lib/posts";
 
 export type { PostCardData, CommentItem };
@@ -19,21 +21,53 @@ export default function PostCard({
   showAllComments?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [comments, setComments] = useState<CommentItem[]>(post.comments);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mediaBroken, setMediaBroken] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
 
   async function toggleLike() {
     const next = !liked;
+    // optimistic
     setLiked(next);
     setLikeCount((c) => c + (next ? 1 : -1));
-    const res = await fetch(`/api/posts/${post.id}/like`, { method: next ? "POST" : "DELETE" });
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/posts/${post.id}/like`, { method: next ? "POST" : "DELETE" });
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setLikeCount(data.count);
+    } catch {
+      // revert on failure
+      setLiked(!next);
+      setLikeCount((c) => c + (next ? -1 : 1));
+      toast.error("Couldn't update like. Check your connection.");
+    }
+  }
+
+  async function copyLink() {
+    const url = `${window.location.origin}/post/${post.id}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for non-secure / sandboxed contexts.
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Couldn't copy link");
     }
   }
 
@@ -70,7 +104,12 @@ export default function PostCard({
   async function deletePost() {
     if (!confirm("Delete this post?")) return;
     const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      toast.success("Post deleted");
+      router.refresh();
+    } else {
+      toast.error("Couldn't delete the post");
+    }
   }
 
   return (
@@ -78,7 +117,7 @@ export default function PostCard({
       {/* header */}
       <div className="flex items-center gap-3 p-3">
         <Link href={`/${post.author.username}`} className="flex items-center gap-2">
-          <Avatar url={post.author.avatarUrl} username={post.author.username} />
+          <Avatar url={post.author.avatarUrl} username={post.author.username} size="sm" />
           <span className="text-sm font-semibold">{post.author.username}</span>
         </Link>
         <span className="text-xs text-zinc-400">· {timeAgo(post.createdAt)}</span>
@@ -90,20 +129,45 @@ export default function PostCard({
       </div>
 
       {/* media */}
-      <div className="bg-zinc-800">
-        {post.mediaType === "VIDEO" ? (
-          <video src={post.mediaUrl} controls playsInline className="max-h-[70vh] w-full bg-black object-contain" />
+      <div className="flex items-center justify-center bg-zinc-800">
+        {mediaBroken ? (
+          <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 text-zinc-500">
+            <span className="text-4xl">🖼️</span>
+            <span className="text-sm">Media unavailable</span>
+          </div>
+        ) : post.mediaType === "VIDEO" ? (
+          <video
+            src={post.mediaUrl}
+            controls
+            playsInline
+            onError={() => setMediaBroken(true)}
+            className="max-h-[70vh] w-full bg-black object-contain"
+          />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.mediaUrl} alt={post.caption ?? `Post by ${post.author.username}`} className="max-h-[70vh] w-full object-contain" />
+          <img
+            src={post.mediaUrl}
+            alt={post.caption ?? `Post by ${post.author.username}`}
+            onClick={() => setZoomed(true)}
+            onError={() => setMediaBroken(true)}
+            className="max-h-[70vh] w-full cursor-zoom-in object-contain"
+          />
         )}
       </div>
+
+      {zoomed && post.mediaType !== "VIDEO" && !mediaBroken && (
+        <Lightbox
+          src={post.mediaUrl}
+          alt={post.caption ?? `Post by ${post.author.username}`}
+          onClose={() => setZoomed(false)}
+        />
+      )}
 
       {/* actions */}
       <div className="px-3 pt-3">
         <div className="flex items-center gap-4">
           <button onClick={toggleLike} aria-label={liked ? "Unlike" : "Like"} className="flex items-center gap-1.5">
-            <svg viewBox="0 0 24 24" className={`h-6 w-6 ${liked ? "fill-red-500 text-red-500" : "fill-none text-zinc-200"}`} stroke="currentColor" strokeWidth="2">
+            <svg viewBox="0 0 24 24" className={`h-6 w-6 transition ${liked ? "fill-red-500 text-red-500" : "fill-none text-zinc-200"}`} stroke="currentColor" strokeWidth="2">
               <path d="M12 21s-7-4.6-9.3-9.2C1 8.5 2.7 5 6 5c2 0 3.2 1.2 4 2.3C10.8 6.2 12 5 14 5c3.3 0 5 3.5 3.3 6.8C19 16.4 12 21 12 21z" />
             </svg>
           </button>
@@ -112,6 +176,11 @@ export default function PostCard({
               <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-5.2A8.5 8.5 0 1 1 21 11.5z" />
             </svg>
           </Link>
+          <button onClick={copyLink} aria-label="Copy link to post" className="ml-auto text-zinc-200 hover:text-indigo-400">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" /><path d="M16 6l-4-4-4 4" /><path d="M12 2v14" />
+            </svg>
+          </button>
         </div>
         <p className="mt-2 text-sm font-semibold">{likeCount} {likeCount === 1 ? "like" : "likes"}</p>
         {post.caption && (
@@ -159,16 +228,5 @@ export default function PostCard({
         </form>
       </div>
     </article>
-  );
-}
-
-function Avatar({ url, username }: { url: string | null; username: string }) {
-  if (url) {
-    return <Image src={url} alt={username} width={32} height={32} unoptimized className="h-8 w-8 rounded-full object-cover ring-1 ring-zinc-800" />;
-  }
-  return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-950 text-xs font-bold text-indigo-400">
-      {username[0]?.toUpperCase()}
-    </span>
   );
 }

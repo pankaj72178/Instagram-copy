@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 
 type State = "following" | "requested" | "none";
 
@@ -15,20 +16,25 @@ export default function FollowButton({
   followsMe: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [state, setState] = useState<State>(initialState);
   const [busy, setBusy] = useState(false);
 
   async function act() {
+    const prev = state;
     setBusy(true);
+    // optimistic: assume success (server confirms exact PENDING/ACCEPTED state)
+    setState(prev === "none" ? "following" : "none");
     try {
-      if (state === "none") {
+      if (prev === "none") {
         const res = await fetch("/api/follow", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username }),
         });
-        const data = await res.json();
-        if (res.ok) setState(data.state);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error);
+        setState(data.state); // "following" or "requested" (private account)
       } else {
         // following -> unfollow, requested -> cancel
         const res = await fetch("/api/follow", {
@@ -36,9 +42,13 @@ export default function FollowButton({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username }),
         });
-        if (res.ok) setState("none");
+        if (!res.ok) throw new Error();
+        setState("none");
       }
       router.refresh(); // refresh counts / private gate
+    } catch {
+      setState(prev); // revert
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }

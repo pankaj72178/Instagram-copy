@@ -38,7 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 // POST /api/posts/:id/comments — add a comment.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const limited = rateLimit(req, "comment", 30, 60_000); // 30 comments/min per IP
+  const limited = await rateLimit(req, "comment", 30, 60_000); // 30 comments/min per IP
   if (limited) return limited;
 
   const me = await getSessionUserId();

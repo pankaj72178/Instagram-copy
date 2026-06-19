@@ -1,11 +1,11 @@
 import Link from "next/link";
-import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
 import { getFollowState, followsMe, canViewContent } from "@/lib/access";
 import FollowButton from "@/components/FollowButton";
 import PostGrid from "@/components/PostGrid";
+import Avatar from "@/components/Avatar";
 
 export default async function ProfilePage({
   params,
@@ -26,7 +26,15 @@ export default async function ProfilePage({
       isPrivate: true,
     },
   });
-  if (!user) notFound();
+  if (!user) {
+    // Maybe they renamed — old links should still work. Look up the history.
+    const renamed = await prisma.user.findFirst({
+      where: { prevUsernames: { has: username } },
+      select: { username: true },
+    });
+    if (renamed) redirect(`/${renamed.username}`);
+    notFound();
+  }
 
   const [postCount, followerCount, followingCount] = await Promise.all([
     prisma.post.count({ where: { authorId: user.id } }),
@@ -51,20 +59,7 @@ export default async function ProfilePage({
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
       {/* Header */}
       <header className="flex items-center gap-6 sm:gap-10">
-        {user.avatarUrl ? (
-          <Image
-            src={user.avatarUrl}
-            alt={user.username}
-            width={88}
-            height={88}
-            unoptimized
-            className="h-20 w-20 rounded-full object-cover ring-1 ring-zinc-800 sm:h-24 sm:w-24"
-          />
-        ) : (
-          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-950 text-3xl font-bold text-indigo-400 sm:h-24 sm:w-24">
-            {user.username[0]?.toUpperCase()}
-          </span>
-        )}
+        <Avatar url={user.avatarUrl} username={user.username} size="xl" />
 
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">
@@ -111,7 +106,15 @@ export default async function ProfilePage({
 
       {/* Posts or private gate */}
       {canView ? (
-        <PostGrid posts={posts} />
+        <PostGrid
+          posts={posts}
+          emptyTitle={isSelf ? "Share your first post" : "No posts yet"}
+          emptyHint={
+            isSelf
+              ? "Photos and videos you post will show up here."
+              : undefined
+          }
+        />
       ) : (
         <div className="py-16 text-center">
           <p className="text-2xl">🔒</p>

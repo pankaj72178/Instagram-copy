@@ -6,7 +6,7 @@ import { rateLimit } from "@/lib/ratelimit";
 
 // POST /api/auth/reset-password { token, password }
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "reset", 10, 60_000);
+  const limited = await rateLimit(req, "reset", 10, 60_000);
   if (limited) return limited;
 
   const { token, password } = (await req.json().catch(() => ({}))) as {
