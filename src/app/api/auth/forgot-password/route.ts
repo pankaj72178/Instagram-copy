@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomInt } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { sendPasswordReset } from "@/lib/mailer";
+import { sendPasswordOtp } from "@/lib/mailer";
 import { rateLimit } from "@/lib/ratelimit";
 
 // POST /api/auth/forgot-password { email }
-// Always responds the same way (don't reveal whether the email exists).
+// Emails a 6-digit OTP. Always responds the same way (don't reveal whether the
+// email exists).
 export async function POST(req: Request) {
   const limited = await rateLimit(req, "forgot", 5, 60_000);
   if (limited) return limited;
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
   const { email } = (await req.json().catch(() => ({}))) as { email?: string };
   const ok = NextResponse.json({
     ok: true,
-    message: "If that email exists, a reset link has been sent.",
+    message: "If that email exists, a verification code has been sent.",
   });
   if (!email) return ok;
 
@@ -24,18 +25,16 @@ export async function POST(req: Request) {
   // Only email/password accounts can reset (Google users have no password).
   if (!user || !user.passwordHash) return ok;
 
-  // Create a one-time token; store only its hash.
-  const token = randomBytes(32).toString("hex");
-  const tokenHash = createHash("sha256").update(token).digest("hex");
+  // Generate a 6-digit code; store only its hash, valid for 10 minutes.
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const codeHash = createHash("sha256").update(code).digest("hex");
   await prisma.user.update({
     where: { id: user.id },
-    data: { resetTokenHash: tokenHash, resetTokenExp: new Date(Date.now() + 60 * 60 * 1000) },
+    data: { resetTokenHash: codeHash, resetTokenExp: new Date(Date.now() + 10 * 60 * 1000) },
   });
 
-  const origin = new URL(req.url).origin;
-  const link = `${origin}/reset-password?token=${token}`;
   try {
-    await sendPasswordReset(user.email, link);
+    await sendPasswordOtp(user.email, code);
   } catch (e) {
     console.error("reset email failed:", e);
   }
