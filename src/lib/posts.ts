@@ -20,6 +20,7 @@ export type PostCardData = {
   createdAt: string;
   likeCount: number;
   likedByMe: boolean;
+  bookmarkedByMe: boolean;
   commentCount: number;
   comments: CommentItem[];
   isOwner: boolean;
@@ -45,6 +46,7 @@ export async function loadPostCards(
       author: { select: { username: true, avatarUrl: true } },
       _count: { select: { likes: true, comments: true } },
       likes: { where: { userId: viewerId }, select: { id: true }, take: 1 },
+      bookmarks: { where: { userId: viewerId }, select: { id: true }, take: 1 },
       comments: {
         orderBy: { createdAt: opts.allComments ? "asc" : "desc" },
         ...(opts.allComments ? {} : { take: opts.commentPreview ?? 2 }),
@@ -69,6 +71,7 @@ export async function loadPostCards(
       createdAt: p.createdAt.toISOString(),
       likeCount: p._count.likes,
       likedByMe: p.likes.length > 0,
+      bookmarkedByMe: p.bookmarks.length > 0,
       commentCount: p._count.comments,
       comments: comments.map((c) => ({
         id: c.id,

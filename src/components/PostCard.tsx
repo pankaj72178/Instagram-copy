@@ -7,6 +7,7 @@ import { timeAgo } from "@/lib/format";
 import { useToast } from "@/components/Toast";
 import Avatar from "@/components/Avatar";
 import Lightbox from "@/components/Lightbox";
+import Linkify from "@/components/Linkify";
 import type { PostCardData, CommentItem } from "@/lib/posts";
 
 export type { PostCardData, CommentItem };
@@ -24,6 +25,7 @@ export default function PostCard({
   const toast = useToast();
   const [liked, setLiked] = useState(post.likedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [bookmarked, setBookmarked] = useState(post.bookmarkedByMe);
   const [comments, setComments] = useState<CommentItem[]>(post.comments);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [text, setText] = useState("");
@@ -75,6 +77,19 @@ export default function PostCard({
           setZoomed(true);
         }
       }, 290);
+    }
+  }
+
+  async function toggleBookmark() {
+    const next = !bookmarked;
+    setBookmarked(next);
+    try {
+      const res = await fetch(`/api/posts/${post.id}/bookmark`, { method: next ? "POST" : "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success(next ? "Saved" : "Removed from saved");
+    } catch {
+      setBookmarked(!next);
+      toast.error("Couldn't update saved posts");
     }
   }
 
@@ -254,9 +269,18 @@ export default function PostCard({
               <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-5.2A8.5 8.5 0 1 1 21 11.5z" />
             </svg>
           </Link>
-          <button onClick={copyLink} aria-label="Copy link to post" className="ml-auto text-zinc-200 hover:text-indigo-400">
+          <button onClick={copyLink} aria-label="Copy link to post" className="text-zinc-200 hover:text-indigo-400">
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" /><path d="M16 6l-4-4-4 4" /><path d="M12 2v14" />
+            </svg>
+          </button>
+          <button
+            onClick={toggleBookmark}
+            aria-label={bookmarked ? "Remove from saved" : "Save post"}
+            className="ml-auto text-zinc-200 hover:text-indigo-400"
+          >
+            <svg viewBox="0 0 24 24" className={`h-6 w-6 ${bookmarked ? "fill-indigo-400 text-indigo-400" : "fill-none"}`} stroke="currentColor" strokeWidth="2">
+              <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
             </svg>
           </button>
         </div>
@@ -287,7 +311,7 @@ export default function PostCard({
           caption && (
             <p className="mt-1 text-sm">
               <Link href={`/${post.author.username}`} className="font-semibold">{post.author.username}</Link>{" "}
-              <span className="whitespace-pre-line">{caption}</span>
+              <Linkify text={caption} />
             </p>
           )
         )}
@@ -305,7 +329,7 @@ export default function PostCard({
             <li key={c.id} className="group flex items-start gap-1 text-sm">
               <span className="flex-1">
                 <Link href={`/${c.user.username}`} className="font-semibold">{c.user.username}</Link>{" "}
-                <span>{c.text}</span>
+                <Linkify text={c.text} />
               </span>
               {(c.user.username === myUsername || post.isOwner) && (
                 <button onClick={() => deleteComment(c.id)} className="text-xs text-zinc-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500">

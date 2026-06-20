@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
-import { getFollowState, followsMe, canViewContent } from "@/lib/access";
+import { getFollowState, followsMe, canViewContent, areBlocked } from "@/lib/access";
 import FollowButton from "@/components/FollowButton";
 import PostGrid from "@/components/PostGrid";
 import Avatar from "@/components/Avatar";
+import ProfileActions from "@/components/ProfileActions";
+import Linkify from "@/components/Linkify";
 
 export default async function ProfilePage({
   params,
@@ -45,6 +47,14 @@ export default async function ProfilePage({
   const isSelf = viewerId === user.id;
   const state = await getFollowState(viewerId, user.id);
   const theyFollowMe = viewerId && !isSelf ? await followsMe(viewerId, user.id) : false;
+  const blocked = !isSelf ? await areBlocked(viewerId, user.id) : false;
+  const iBlockedThem =
+    viewerId && !isSelf
+      ? !!(await prisma.block.findUnique({
+          where: { blockerId_blockedId: { blockerId: viewerId, blockedId: user.id } },
+          select: { id: true },
+        }))
+      : false;
   const canView = await canViewContent(viewerId, user);
 
   const posts = canView
@@ -70,14 +80,27 @@ export default async function ProfilePage({
               </span>
             )}
             {isSelf ? (
-              <Link
-                href="/settings"
-                className="rounded-lg bg-zinc-800 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700"
-              >
-                Edit profile
-              </Link>
+              <>
+                <Link
+                  href="/settings"
+                  className="rounded-lg bg-zinc-800 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700"
+                >
+                  Edit profile
+                </Link>
+                <Link
+                  href="/saved"
+                  className="rounded-lg bg-zinc-800 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700"
+                >
+                  Saved
+                </Link>
+              </>
             ) : viewerId ? (
-              <FollowButton username={user.username} initialState={state === "self" ? "none" : state} followsMe={theyFollowMe} />
+              <>
+                {!blocked && (
+                  <FollowButton username={user.username} initialState={state === "self" ? "none" : state} followsMe={theyFollowMe} />
+                )}
+                <ProfileActions username={user.username} initialBlocked={iBlockedThem} />
+              </>
             ) : (
               <Link href="/login" className="rounded-lg bg-indigo-600 px-5 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700">
                 Follow
@@ -99,13 +122,27 @@ export default async function ProfilePage({
 
       <div className="mt-4">
         <p className="font-semibold">{user.displayName}</p>
-        {user.bio && <p className="mt-1 whitespace-pre-line text-sm text-zinc-300">{user.bio}</p>}
+        {user.bio && (
+          <p className="mt-1 text-sm text-zinc-300">
+            <Linkify text={user.bio} />
+          </p>
+        )}
       </div>
 
       <hr className="my-6 border-zinc-800" />
 
-      {/* Posts or private gate */}
-      {canView ? (
+      {/* Posts, block gate, or private gate */}
+      {blocked ? (
+        <div className="py-16 text-center">
+          <p className="text-2xl">🚫</p>
+          <p className="mt-2 font-semibold">
+            {iBlockedThem ? "You blocked this account" : "This account is unavailable"}
+          </p>
+          <p className="text-sm text-zinc-500">
+            {iBlockedThem ? "Unblock them to see their posts again." : ""}
+          </p>
+        </div>
+      ) : canView ? (
         <PostGrid
           posts={posts}
           emptyTitle={isSelf ? "Share your first post" : "No posts yet"}
