@@ -46,6 +46,14 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Apply the saved theme before paint to avoid a flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light')}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col bg-zinc-950 text-zinc-50">
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <ToastProvider>

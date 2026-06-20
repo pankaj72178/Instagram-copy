@@ -16,7 +16,7 @@ export async function DELETE(req: Request) {
   // Gather media to clean up after the rows are gone (avatar + every post's file).
   const [account, posts] = await Promise.all([
     prisma.user.findUnique({ where: { id: me }, select: { avatarUrl: true } }),
-    prisma.post.findMany({ where: { authorId: me }, select: { id: true, mediaUrl: true } }),
+    prisma.post.findMany({ where: { authorId: me }, select: { id: true, mediaUrl: true, mediaUrls: true } }),
   ]);
   if (!account) {
     await clearAuthCookie();
@@ -52,7 +52,7 @@ export async function DELETE(req: Request) {
 
   // Best-effort media cleanup (DB-stored bytes or Blob files).
   await Promise.all([
-    ...posts.map((p) => deleteMedia(p.mediaUrl)),
+    ...posts.flatMap((p) => (p.mediaUrls.length ? p.mediaUrls : [p.mediaUrl]).map((u) => deleteMedia(u))),
     account.avatarUrl ? deleteMedia(account.avatarUrl) : Promise.resolve(),
   ]);
 

@@ -16,6 +16,8 @@ export type PostCardData = {
   author: { username: string; avatarUrl: string | null };
   mediaUrl: string;
   mediaType: string;
+  mediaUrls: string[];
+  mediaTypes: string[];
   caption: string | null;
   createdAt: string;
   likeCount: number;
@@ -40,6 +42,8 @@ export async function loadPostCards(
       id: true,
       mediaUrl: true,
       mediaType: true,
+      mediaUrls: true,
+      mediaTypes: true,
       caption: true,
       createdAt: true,
       authorId: true,
@@ -67,6 +71,9 @@ export async function loadPostCards(
       author: p.author,
       mediaUrl: p.mediaUrl,
       mediaType: p.mediaType,
+      // Fall back to the single fields for pre-carousel posts.
+      mediaUrls: p.mediaUrls.length ? p.mediaUrls : [p.mediaUrl],
+      mediaTypes: p.mediaTypes.length ? p.mediaTypes : [p.mediaType],
       caption: p.caption,
       createdAt: p.createdAt.toISOString(),
       likeCount: p._count.likes,

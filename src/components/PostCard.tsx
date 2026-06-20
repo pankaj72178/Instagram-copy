@@ -39,6 +39,10 @@ export default function PostCard({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(caption);
   const lastTap = useRef(0);
+  // carousel
+  const slides = post.mediaUrls.map((url, i) => ({ url, type: post.mediaTypes[i] ?? post.mediaType }));
+  const [slide, setSlide] = useState(0);
+  const cur = slides[Math.min(slide, slides.length - 1)];
 
   function bounce() {
     setBounceKey((k) => k + 1);
@@ -210,9 +214,10 @@ export default function PostCard({
             <span className="text-4xl">🖼️</span>
             <span className="text-sm">Media unavailable</span>
           </div>
-        ) : post.mediaType === "VIDEO" ? (
+        ) : cur.type === "VIDEO" ? (
           <video
-            src={post.mediaUrl}
+            key={cur.url}
+            src={cur.url}
             controls
             playsInline
             onError={() => setMediaBroken(true)}
@@ -221,13 +226,48 @@ export default function PostCard({
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={post.mediaUrl}
+            key={cur.url}
+            src={cur.url}
             alt={caption || `Post by ${post.author.username}`}
             onClick={onImageTap}
             onDoubleClick={(e) => e.preventDefault()}
             onError={() => setMediaBroken(true)}
             className="max-h-[70vh] w-full cursor-pointer object-contain"
           />
+        )}
+
+        {/* carousel controls */}
+        {slides.length > 1 && !mediaBroken && (
+          <>
+            {slide > 0 && (
+              <button
+                type="button"
+                onClick={() => setSlide((s) => s - 1)}
+                aria-label="Previous"
+                className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-lg text-white hover:bg-black/70"
+              >
+                ‹
+              </button>
+            )}
+            {slide < slides.length - 1 && (
+              <button
+                type="button"
+                onClick={() => setSlide((s) => s + 1)}
+                aria-label="Next"
+                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-lg text-white hover:bg-black/70"
+              >
+                ›
+              </button>
+            )}
+            <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-semibold text-white">
+              {slide + 1}/{slides.length}
+            </span>
+            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+              {slides.map((_, i) => (
+                <span key={i} className={`h-1.5 w-1.5 rounded-full transition ${i === slide ? "bg-white" : "bg-white/40"}`} />
+              ))}
+            </div>
+          </>
         )}
 
         {/* heart burst overlay */}
@@ -242,9 +282,9 @@ export default function PostCard({
         )}
       </div>
 
-      {zoomed && post.mediaType !== "VIDEO" && !mediaBroken && (
+      {zoomed && cur.type !== "VIDEO" && !mediaBroken && (
         <Lightbox
-          src={post.mediaUrl}
+          src={cur.url}
           alt={caption || `Post by ${post.author.username}`}
           onClose={() => setZoomed(false)}
         />

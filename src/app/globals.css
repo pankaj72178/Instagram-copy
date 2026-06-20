@@ -19,6 +19,49 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+/* =========================================================
+   Light theme — applied when <html class="light">.
+   Remaps the dark zinc/indigo utilities the app uses.
+   ========================================================= */
+html.light {
+  --background: #ffffff;
+  --foreground: #18181b;
+  color-scheme: light;
+}
+html.light body {
+  background: #ffffff;
+  color: #18181b;
+}
+/* backgrounds */
+.light .bg-zinc-950 { background-color: #ffffff !important; }
+.light .bg-zinc-900,
+.light .bg-zinc-900\/90,
+.light .bg-zinc-900\/95,
+.light .bg-zinc-900\/60,
+.light .bg-zinc-900\/10,
+.light .bg-zinc-900\/15 { background-color: #f4f4f5 !important; }
+.light .bg-zinc-800 { background-color: #e7e7ea !important; }
+.light .bg-indigo-950 { background-color: #e0e7ff !important; }
+.light .folo-skeleton { background-color: #e4e4e7; }
+/* text */
+.light .text-zinc-50,
+.light .text-zinc-100,
+.light .text-zinc-200 { color: #18181b !important; }
+.light .text-zinc-300 { color: #3f3f46 !important; }
+.light .text-zinc-400 { color: #52525b !important; }
+.light .text-zinc-500 { color: #71717a !important; }
+.light .text-indigo-400 { color: #4f46e5 !important; }
+/* borders / rings / divides */
+.light .border-zinc-800,
+.light .border-zinc-700 { border-color: #e4e4e7 !important; }
+.light .ring-zinc-800,
+.light .ring-zinc-700 { --tw-ring-color: #e4e4e7 !important; }
+.light .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) { border-color: #e4e4e7 !important; }
+/* inputs */
+.light input,
+.light textarea,
+.light select { color: #18181b; }
+
 /* ---- Shimmer for loading skeletons ---- */
 @keyframes folo-shimmer {
   100% {
@@ -75,7 +118,7 @@ body {
 .story-ring > * {
   display: block;
   border-radius: 9999px;
-  box-shadow: 0 0 0 2px #09090b; /* gap between ring and avatar */
+  box-shadow: 0 0 0 2px var(--background); /* gap between ring and avatar */
 }
 /* gradient primary button + glow */
 .btn-gradient {

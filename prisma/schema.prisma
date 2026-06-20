@@ -85,9 +85,13 @@ model Post {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   authorId  String   @db.ObjectId
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  mediaUrl  String
-  mediaType String // "IMAGE" | "VIDEO"
-  caption   String?
+  // mediaUrl/mediaType = the first item (kept for grids, thumbnails, back-compat).
+  mediaUrl   String
+  mediaType  String // "IMAGE" | "VIDEO"
+  // Full ordered media for carousel posts (1..N items).
+  mediaUrls  String[] @default([])
+  mediaTypes String[] @default([])
+  caption    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

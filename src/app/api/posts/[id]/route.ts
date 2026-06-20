@@ -39,7 +39,7 @@ export async function DELETE(
   const { id } = await params;
   const post = await prisma.post.findUnique({
     where: { id },
-    select: { authorId: true, mediaUrl: true },
+    select: { authorId: true, mediaUrl: true, mediaUrls: true },
   });
   if (!post) return NextResponse.json({ error: "Post not found" }, { status: 404 });
   if (post.authorId !== me) {
@@ -47,6 +47,8 @@ export async function DELETE(
   }
 
   await prisma.post.delete({ where: { id } });
-  await deleteMedia(post.mediaUrl); // best-effort file cleanup
+  // best-effort cleanup of every media item (or the single one for old posts)
+  const urls = post.mediaUrls.length ? post.mediaUrls : [post.mediaUrl];
+  await Promise.all(urls.map((u) => deleteMedia(u)));
   return NextResponse.json({ ok: true });
 }
