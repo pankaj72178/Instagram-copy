@@ -59,7 +59,7 @@ export default async function ProfilePage({
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
       {/* Header */}
       <header className="flex items-center gap-6 sm:gap-10">
-        <Avatar url={user.avatarUrl} username={user.username} size="xl" />
+        <Avatar url={user.avatarUrl} username={user.username} size="xl" ring />
 
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-3">

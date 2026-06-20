@@ -23,18 +23,20 @@ export default function Avatar({
   username,
   size = "sm",
   className = "",
+  ring = false,
 }: {
   url: string | null;
   username: string;
   size?: keyof typeof SIZES;
   className?: string;
+  ring?: boolean;
 }) {
   const [broken, setBroken] = useState(false);
   const dim = SIZES[size];
   const px = PX[size];
 
-  if (url && !broken) {
-    return (
+  const inner =
+    url && !broken ? (
       <Image
         src={url}
         alt={username}
@@ -42,17 +44,20 @@ export default function Avatar({
         height={px}
         unoptimized={!isRemote(url)}
         onError={() => setBroken(true)}
-        className={`${dim} rounded-full object-cover ring-1 ring-zinc-800 ${className}`}
+        className={`${dim} rounded-full object-cover ${ring ? "" : "ring-1 ring-zinc-800"} ${className}`}
       />
+    ) : (
+      // Fallback: first letter on a tinted disc.
+      <span
+        className={`flex ${dim} items-center justify-center rounded-full bg-indigo-950 font-bold text-indigo-400 ${className}`}
+        aria-label={username}
+      >
+        {username[0]?.toUpperCase() || "?"}
+      </span>
     );
+
+  if (ring) {
+    return <span className="story-ring inline-block">{inner}</span>;
   }
-  // Fallback: first letter on a tinted disc.
-  return (
-    <span
-      className={`flex ${dim} items-center justify-center rounded-full bg-indigo-950 font-bold text-indigo-400 ${className}`}
-      aria-label={username}
-    >
-      {username[0]?.toUpperCase() || "?"}
-    </span>
-  );
+  return inner;
 }

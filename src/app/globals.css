@@ -59,6 +59,77 @@ body {
   animation: folo-page-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ---- Premium brand + interaction helpers ---- */
+.text-brand {
+  background: linear-gradient(120deg, #818cf8 0%, #a855f7 45%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* gradient "story" ring around avatars */
+.story-ring {
+  padding: 2px;
+  background: conic-gradient(from 210deg, #f59e0b, #ec4899, #a855f7, #6366f1, #f59e0b);
+  border-radius: 9999px;
+}
+.story-ring > * {
+  display: block;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px #09090b; /* gap between ring and avatar */
+}
+/* gradient primary button + glow */
+.btn-gradient {
+  background-image: linear-gradient(110deg, #6366f1, #a855f7 55%, #d946ef);
+  background-size: 180% 100%;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, background-position 0.4s;
+}
+.btn-gradient:hover {
+  background-position: 100% 0;
+  box-shadow: 0 12px 32px rgba(168, 85, 247, 0.55);
+  transform: translateY(-1px);
+}
+.btn-gradient:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* ---- Heart burst on double-tap ---- */
+@keyframes folo-heart-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  30% {
+    transform: scale(0.95);
+  }
+  45% {
+    transform: scale(1.05);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+.heart-burst {
+  animation: folo-heart-pop 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* like icon pop */
+@keyframes folo-like-bounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+.like-bounce {
+  animation: folo-like-bounce 0.4s ease;
+}
+
 /* ---- Toast enter animation ---- */
 @keyframes folo-toast-in {
   from {
@@ -77,7 +148,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .folo-skeleton::after,
   .folo-toast,
-  .folo-page {
+  .folo-page,
+  .heart-burst,
+  .like-bounce {
     animation: none;
   }
 }

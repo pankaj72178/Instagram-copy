@@ -37,12 +37,14 @@ export default function SignupPage() {
     "w-full rounded-xl border border-zinc-700 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-950 p-6">
-      <div className="w-full max-w-sm rounded-2xl bg-zinc-900 p-8 shadow-xl ring-1 ring-zinc-800">
-        <h1 className="text-center text-3xl font-extrabold tracking-tight text-indigo-400">
+    <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-950 p-6">
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-indigo-600/30 blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-32 right-1/4 h-80 w-80 rounded-full bg-fuchsia-600/20 blur-[120px]" />
+      <div className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-900/60 p-8 shadow-2xl backdrop-blur-xl">
+        <h1 className="text-brand text-center text-4xl font-extrabold tracking-tight">
           Folo
         </h1>
-        <p className="mb-6 mt-1 text-center text-sm text-zinc-500">Create your account</p>
+        <p className="mb-6 mt-1 text-center text-sm text-zinc-400">Create your account</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {serverError && (
@@ -87,7 +89,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-indigo-600 py-2.5 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+            className="btn-gradient w-full rounded-xl py-2.5 font-semibold text-white disabled:opacity-60"
           >
             {isSubmitting ? "Creating…" : "Sign up"}
           </button>

@@ -26,7 +26,7 @@ export default function Nav({ user }: { user: NavUser | null }) {
       {/* Top bar (desktop) */}
       <header className="sticky top-0 z-40 hidden border-b border-zinc-800 bg-zinc-900/90 backdrop-blur md:block">
         <nav className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-extrabold tracking-tight text-indigo-400">
+          <Link href="/" className="text-brand text-xl font-extrabold tracking-tight">
             Folo
           </Link>
           <div className="flex items-center gap-1">

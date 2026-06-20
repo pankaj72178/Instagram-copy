@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
   return (
     <main className="flex flex-1 items-center justify-center bg-zinc-950 p-6">
       <div className="w-full max-w-sm rounded-2xl bg-zinc-900 p-8 shadow-xl ring-1 ring-zinc-800">
-        <h1 className="text-center text-3xl font-extrabold tracking-tight text-indigo-400">Folo</h1>
+        <h1 className="text-brand text-center text-3xl font-extrabold tracking-tight">Folo</h1>
         <p className="mb-6 mt-1 text-center text-sm text-zinc-400">
           {step === 1 ? "Reset your password" : "Enter the code we emailed you"}
         </p>
@@ -146,6 +146,12 @@ export default function ForgotPasswordPage() {
               </button>
             </div>
           </form>
+        )}
+
+        {step === 1 && (
+          <p className="mt-4 rounded-lg bg-zinc-800/60 p-3 text-center text-xs text-zinc-400">
+            Signed up with Google? Use <b className="text-zinc-200">Continue with Google</b> on the login page instead — Google accounts don’t have a password.
+          </p>
         )}
 
         <p className="mt-6 text-center text-sm text-zinc-400">

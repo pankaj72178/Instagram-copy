@@ -1,11 +1,18 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import EditProfileForm from "@/components/EditProfileForm";
 import AccountActions from "@/components/AccountActions";
+import PasswordSettings from "@/components/PasswordSettings";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/settings");
+
+  const pw = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { passwordHash: true },
+  });
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 px-4 py-8">
@@ -19,6 +26,12 @@ export default async function SettingsPage() {
           avatarUrl: user.avatarUrl,
         }}
       />
+
+      <section className="mt-10">
+        <h2 className="mb-3 text-lg font-semibold text-zinc-200">Security</h2>
+        <PasswordSettings hasPassword={!!pw?.passwordHash} />
+      </section>
+
       <AccountActions />
     </main>
   );

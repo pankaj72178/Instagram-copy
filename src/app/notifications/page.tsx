@@ -1,16 +1,26 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
 import FollowRequests from "@/components/FollowRequests";
+import Avatar from "@/components/Avatar";
+
+type Actor = { username: string; avatarUrl: string | null };
+type Event = {
+  key: string;
+  at: Date;
+  actor: Actor;
+  text: string;
+  postId?: string;
+  postMedia?: string;
+};
 
 export default async function NotificationsPage() {
   const me = await getCurrentUser();
   if (!me) redirect("/login?next=/notifications");
 
-  const [requests, recentFollowers, recentLikes] = await Promise.all([
+  const [requests, recentFollowers, recentLikes, recentComments] = await Promise.all([
     prisma.follow.findMany({
       where: { followingId: me.id, status: "PENDING" },
       orderBy: { createdAt: "desc" },
@@ -23,7 +33,7 @@ export default async function NotificationsPage() {
       select: { id: true, updatedAt: true, follower: { select: { username: true, avatarUrl: true } } },
     }),
     prisma.like.findMany({
-      where: { post: { authorId: me.id } },
+      where: { post: { authorId: me.id }, NOT: { userId: me.id } },
       orderBy: { createdAt: "desc" },
       take: 15,
       select: {
@@ -33,61 +43,90 @@ export default async function NotificationsPage() {
         post: { select: { id: true, mediaUrl: true } },
       },
     }),
+    prisma.comment.findMany({
+      where: { post: { authorId: me.id }, NOT: { userId: me.id } },
+      orderBy: { createdAt: "desc" },
+      take: 15,
+      select: {
+        id: true,
+        createdAt: true,
+        text: true,
+        user: { select: { username: true, avatarUrl: true } },
+        post: { select: { id: true, mediaUrl: true } },
+      },
+    }),
   ]);
+
+  // Merge everything into one time-sorted activity feed.
+  const events: Event[] = [
+    ...recentFollowers.map((f) => ({
+      key: `f-${f.id}`,
+      at: f.updatedAt,
+      actor: f.follower,
+      text: "started following you",
+    })),
+    ...recentLikes.map((l) => ({
+      key: `l-${l.id}`,
+      at: l.createdAt,
+      actor: l.user,
+      text: "liked your post",
+      postId: l.post.id,
+      postMedia: l.post.mediaUrl,
+    })),
+    ...recentComments.map((c) => ({
+      key: `c-${c.id}`,
+      at: c.createdAt,
+      actor: c.user,
+      text: `commented: ${c.text.length > 40 ? c.text.slice(0, 40) + "…" : c.text}`,
+      postId: c.post.id,
+      postMedia: c.post.mediaUrl,
+    })),
+  ]
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    .slice(0, 30);
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
       <h1 className="mb-4 text-xl font-bold">Activity</h1>
 
-      <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">Follow requests</h2>
-        <FollowRequests requests={requests} />
-      </section>
+      {requests.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">Follow requests</h2>
+          <FollowRequests requests={requests} />
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">Recent</h2>
-        {recentFollowers.length === 0 && recentLikes.length === 0 ? (
-          <p className="text-sm text-zinc-400">Nothing here yet.</p>
+        {events.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <span className="text-4xl">🔔</span>
+            <p className="font-semibold">No activity yet</p>
+            <p className="text-sm text-zinc-500">Likes, comments and new followers will show up here.</p>
+          </div>
         ) : (
           <ul className="space-y-3">
-            {recentFollowers.map((f) => (
-              <li key={`f-${f.id}`} className="flex items-center gap-3 text-sm">
-                <UserAvatar url={f.follower.avatarUrl} username={f.follower.username} />
-                <span className="flex-1">
-                  <Link href={`/${f.follower.username}`} className="font-semibold">{f.follower.username}</Link>{" "}
-                  started following you
-                </span>
-                <span className="text-xs text-zinc-400">{timeAgo(f.updatedAt)}</span>
-              </li>
-            ))}
-            {recentLikes.map((l) => (
-              <li key={`l-${l.id}`} className="flex items-center gap-3 text-sm">
-                <UserAvatar url={l.user.avatarUrl} username={l.user.username} />
-                <span className="flex-1">
-                  <Link href={`/${l.user.username}`} className="font-semibold">{l.user.username}</Link>{" "}
-                  liked your post
-                </span>
-                <Link href={`/post/${l.post.id}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={l.post.mediaUrl} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-zinc-800" />
+            {events.map((e) => (
+              <li key={e.key} className="flex items-center gap-3 text-sm">
+                <Link href={`/${e.actor.username}`} className="shrink-0">
+                  <Avatar url={e.actor.avatarUrl} username={e.actor.username} size="md" />
                 </Link>
-                <span className="text-xs text-zinc-400">{timeAgo(l.createdAt)}</span>
+                <span className="flex-1">
+                  <Link href={`/${e.actor.username}`} className="font-semibold">{e.actor.username}</Link>{" "}
+                  {e.text}
+                </span>
+                {e.postId && e.postMedia && (
+                  <Link href={`/post/${e.postId}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={e.postMedia} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-zinc-800" />
+                  </Link>
+                )}
+                <span className="whitespace-nowrap text-xs text-zinc-400">{timeAgo(e.at)}</span>
               </li>
             ))}
           </ul>
         )}
       </section>
     </main>
-  );
-}
-
-function UserAvatar({ url, username }: { url: string | null; username: string }) {
-  if (url) {
-    return <Image src={url} alt={username} width={40} height={40} unoptimized className="h-10 w-10 rounded-full object-cover ring-1 ring-zinc-800" />;
-  }
-  return (
-    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-950 font-bold text-indigo-400">
-      {username[0]?.toUpperCase()}
-    </span>
   );
 }

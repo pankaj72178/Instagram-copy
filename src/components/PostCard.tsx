@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { timeAgo } from "@/lib/format";
@@ -30,22 +30,51 @@ export default function PostCard({
   const [busy, setBusy] = useState(false);
   const [mediaBroken, setMediaBroken] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [burstKey, setBurstKey] = useState(0); // >0 shows the heart burst
+  const [bounceKey, setBounceKey] = useState(0);
+  // caption editing (owner only)
+  const [caption, setCaption] = useState(post.caption ?? "");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(caption);
+  const lastTap = useRef(0);
+
+  function bounce() {
+    setBounceKey((k) => k + 1);
+  }
 
   async function toggleLike() {
     const next = !liked;
-    // optimistic
     setLiked(next);
     setLikeCount((c) => c + (next ? 1 : -1));
+    if (next) bounce();
     try {
       const res = await fetch(`/api/posts/${post.id}/like`, { method: next ? "POST" : "DELETE" });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLikeCount(data.count);
     } catch {
-      // revert on failure
       setLiked(!next);
       setLikeCount((c) => c + (next ? -1 : 1));
       toast.error("Couldn't update like. Check your connection.");
+    }
+  }
+
+  // Double-tap → like + heart burst. Single tap → open the lightbox.
+  function onImageTap() {
+    const now = Date.now();
+    if (now - lastTap.current < 280) {
+      lastTap.current = 0;
+      setBurstKey((k) => k + 1);
+      if (!liked) toggleLike();
+      else bounce();
+    } else {
+      lastTap.current = now;
+      window.setTimeout(() => {
+        if (lastTap.current && Date.now() - lastTap.current >= 280) {
+          lastTap.current = 0;
+          setZoomed(true);
+        }
+      }, 290);
     }
   }
 
@@ -55,7 +84,6 @@ export default function PostCard({
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
       } else {
-        // Fallback for non-secure / sandboxed contexts.
         const ta = document.createElement("textarea");
         ta.value = url;
         ta.style.position = "fixed";
@@ -68,6 +96,27 @@ export default function PostCard({
       toast.success("Link copied to clipboard");
     } catch {
       toast.error("Couldn't copy link");
+    }
+  }
+
+  async function saveCaption() {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caption: draft }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Couldn't update caption");
+        return;
+      }
+      setCaption(draft);
+      setEditing(false);
+      toast.success("Caption updated");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -117,19 +166,30 @@ export default function PostCard({
       {/* header */}
       <div className="flex items-center gap-3 p-3">
         <Link href={`/${post.author.username}`} className="flex items-center gap-2">
-          <Avatar url={post.author.avatarUrl} username={post.author.username} size="sm" />
+          <Avatar url={post.author.avatarUrl} username={post.author.username} size="sm" ring />
           <span className="text-sm font-semibold">{post.author.username}</span>
         </Link>
         <span className="text-xs text-zinc-400">· {timeAgo(post.createdAt)}</span>
         {post.isOwner && (
-          <button onClick={deletePost} className="ml-auto text-xs font-medium text-red-500 hover:underline">
-            Delete
-          </button>
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={() => {
+                setDraft(caption);
+                setEditing(true);
+              }}
+              className="text-xs font-medium text-zinc-400 hover:text-indigo-400"
+            >
+              Edit
+            </button>
+            <button onClick={deletePost} className="text-xs font-medium text-red-500 hover:underline">
+              Delete
+            </button>
+          </div>
         )}
       </div>
 
       {/* media */}
-      <div className="flex items-center justify-center bg-zinc-800">
+      <div className="relative flex select-none items-center justify-center bg-zinc-800">
         {mediaBroken ? (
           <div className="flex aspect-square w-full flex-col items-center justify-center gap-2 text-zinc-500">
             <span className="text-4xl">🖼️</span>
@@ -147,18 +207,30 @@ export default function PostCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={post.mediaUrl}
-            alt={post.caption ?? `Post by ${post.author.username}`}
-            onClick={() => setZoomed(true)}
+            alt={caption || `Post by ${post.author.username}`}
+            onClick={onImageTap}
+            onDoubleClick={(e) => e.preventDefault()}
             onError={() => setMediaBroken(true)}
-            className="max-h-[70vh] w-full cursor-zoom-in object-contain"
+            className="max-h-[70vh] w-full cursor-pointer object-contain"
           />
+        )}
+
+        {/* heart burst overlay */}
+        {burstKey > 0 && (
+          <svg
+            key={burstKey}
+            viewBox="0 0 24 24"
+            className="heart-burst pointer-events-none absolute h-28 w-28 fill-white/95 drop-shadow-lg"
+          >
+            <path d="M12 21s-7-4.6-9.3-9.2C1 8.5 2.7 5 6 5c2 0 3.2 1.2 4 2.3C10.8 6.2 12 5 14 5c3.3 0 5 3.5 3.3 6.8C19 16.4 12 21 12 21z" />
+          </svg>
         )}
       </div>
 
       {zoomed && post.mediaType !== "VIDEO" && !mediaBroken && (
         <Lightbox
           src={post.mediaUrl}
-          alt={post.caption ?? `Post by ${post.author.username}`}
+          alt={caption || `Post by ${post.author.username}`}
           onClose={() => setZoomed(false)}
         />
       )}
@@ -167,7 +239,13 @@ export default function PostCard({
       <div className="px-3 pt-3">
         <div className="flex items-center gap-4">
           <button onClick={toggleLike} aria-label={liked ? "Unlike" : "Like"} className="flex items-center gap-1.5">
-            <svg viewBox="0 0 24 24" className={`h-6 w-6 transition ${liked ? "fill-red-500 text-red-500" : "fill-none text-zinc-200"}`} stroke="currentColor" strokeWidth="2">
+            <svg
+              key={bounceKey}
+              viewBox="0 0 24 24"
+              className={`h-6 w-6 transition ${liked ? "fill-red-500 text-red-500" : "fill-none text-zinc-200"} ${bounceKey > 0 ? "like-bounce" : ""}`}
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 21s-7-4.6-9.3-9.2C1 8.5 2.7 5 6 5c2 0 3.2 1.2 4 2.3C10.8 6.2 12 5 14 5c3.3 0 5 3.5 3.3 6.8C19 16.4 12 21 12 21z" />
             </svg>
           </button>
@@ -183,11 +261,35 @@ export default function PostCard({
           </button>
         </div>
         <p className="mt-2 text-sm font-semibold">{likeCount} {likeCount === 1 ? "like" : "likes"}</p>
-        {post.caption && (
-          <p className="mt-1 text-sm">
-            <Link href={`/${post.author.username}`} className="font-semibold">{post.author.username}</Link>{" "}
-            <span className="whitespace-pre-line">{post.caption}</span>
-          </p>
+
+        {/* caption (editable by owner) */}
+        {editing ? (
+          <div className="mt-2 space-y-2">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={3}
+              maxLength={2200}
+              autoFocus
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+              placeholder="Write a caption…"
+            />
+            <div className="flex gap-2">
+              <button onClick={saveCaption} disabled={busy} className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
+                {busy ? "Saving…" : "Save"}
+              </button>
+              <button onClick={() => setEditing(false)} disabled={busy} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-semibold ring-1 ring-zinc-700 hover:bg-zinc-700">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          caption && (
+            <p className="mt-1 text-sm">
+              <Link href={`/${post.author.username}`} className="font-semibold">{post.author.username}</Link>{" "}
+              <span className="whitespace-pre-line">{caption}</span>
+            </p>
+          )
         )}
       </div>
 
