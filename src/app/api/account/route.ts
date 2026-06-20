@@ -42,6 +42,11 @@ export async function DELETE(req: Request) {
     where: { OR: [{ blockerId: me }, { blockedId: me }] },
   });
   await prisma.report.deleteMany({ where: { reporterId: me } });
+  // Conversations + their messages (Message cascades when the conversation is deleted).
+  await prisma.message.deleteMany({ where: { senderId: me } });
+  await prisma.conversation.deleteMany({
+    where: { OR: [{ userAId: me }, { userBId: me }] },
+  });
   await prisma.post.deleteMany({ where: { authorId: me } });
   await prisma.user.delete({ where: { id: me } });
 

@@ -97,7 +97,15 @@ export default async function ProfilePage({
             ) : viewerId ? (
               <>
                 {!blocked && (
-                  <FollowButton username={user.username} initialState={state === "self" ? "none" : state} followsMe={theyFollowMe} />
+                  <>
+                    <FollowButton username={user.username} initialState={state === "self" ? "none" : state} followsMe={theyFollowMe} />
+                    <Link
+                      href={`/messages/${user.username}`}
+                      className="rounded-lg bg-zinc-800 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700"
+                    >
+                      Message
+                    </Link>
+                  </>
                 )}
                 <ProfileActions username={user.username} initialBlocked={iBlockedThem} />
               </>

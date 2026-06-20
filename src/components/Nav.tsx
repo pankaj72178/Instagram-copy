@@ -11,15 +11,23 @@ const links = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/explore", label: "Explore", icon: SearchIcon },
   { href: "/upload", label: "Create", icon: PlusIcon },
+  { href: "/messages", label: "Messages", icon: MessageIcon },
   { href: "/notifications", label: "Activity", icon: HeartIcon },
 ];
 
-export default function Nav({ user }: { user: NavUser | null }) {
+export default function Nav({ user, unread = 0 }: { user: NavUser | null; unread?: number }) {
   const pathname = usePathname();
   if (!user) return null;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const Badge = ({ href }: { href: string }) =>
+    href === "/messages" && unread > 0 ? (
+      <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white">
+        {unread > 9 ? "9+" : unread}
+      </span>
+    ) : null;
 
   return (
     <>
@@ -38,7 +46,10 @@ export default function Nav({ user }: { user: NavUser | null }) {
                   isActive(l.href) ? "bg-indigo-950 text-indigo-400" : "text-zinc-300 hover:bg-zinc-800"
                 }`}
               >
-                <l.icon className="h-5 w-5" />
+                <span className="relative">
+                  <l.icon className="h-5 w-5" />
+                  <Badge href={l.href} />
+                </span>
                 {l.label}
               </Link>
             ))}
@@ -62,9 +73,10 @@ export default function Nav({ user }: { user: NavUser | null }) {
             key={l.href}
             href={l.href}
             aria-label={l.label}
-            className={`rounded-lg p-2 ${isActive(l.href) ? "text-indigo-400" : "text-zinc-500"}`}
+            className={`relative rounded-lg p-2 ${isActive(l.href) ? "text-indigo-400" : "text-zinc-500"}`}
           >
             <l.icon className="h-6 w-6" />
+            <Badge href={l.href} />
           </Link>
         ))}
         <Link href={`/${user.username}`} aria-label="Profile" className="rounded-lg p-1">
@@ -107,4 +119,7 @@ function PlusIcon(p: React.SVGProps<SVGSVGElement>) {
 }
 function HeartIcon(p: React.SVGProps<SVGSVGElement>) {
   return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...p}><path d="M12 21s-7-4.6-9.3-9.2C1 8.5 2.7 5 6 5c2 0 3.2 1.2 4 2.3C10.8 6.2 12 5 14 5c3.3 0 5 3.5 3.3 6.8C19 16.4 12 21 12 21z" /></svg>);
+}
+function MessageIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...p}><path d="m22 2-7 20-4-9-9-4 20-7z" /><path d="M22 2 11 13" /></svg>);
 }
