@@ -1,88 +1,166 @@
-# Folo
+# 📸 Folo
 
-A full-stack, Instagram-style social app — built with the Next.js App Router, TypeScript, Tailwind CSS, Prisma, and MongoDB.
+**Folo is an Instagram-style social app** — sign up, post photos & videos, follow friends, like and comment, chat in DMs, and scroll a personalized feed.
 
-**Live:** https://instagram-copy-beta.vercel.app
+🔗 **Live demo:** https://instagram-copy-beta.vercel.app
+🧪 **Try it instantly:** log in with `ava@folo.test` / `password123`
 
-## Features
+Built with **Next.js (App Router) + TypeScript + Tailwind + Prisma + MongoDB**.
 
-### Social
-- **Auth** — email/password, **Sign in with Google**, JWT in httpOnly cookies, bcrypt hashing
-- **Password reset** via emailed **6-digit OTP** (Gmail SMTP or Resend)
-- **Profiles** — editable username (with old-link redirects), display name, bio, avatar, public/private toggle
-- **Follows** — instant for public accounts, **follow requests** + approve for private
-- **Posts** — photos & videos, **multi-image carousel** (up to 10), captions, edit caption, delete
-- **Feed** — people you follow + yourself, cursor pagination, privacy-enforced
-- **Explore** — recent posts from public accounts + **user search**
-- **Likes** (double-tap with heart-burst), **comments**
-- **Bookmarks** + a private **Saved** tab
-- **@mentions & #hashtags** — clickable, with hashtag pages
-- **Direct messages** — 1:1 chats, unread badges, live polling, **encrypted at rest**
-- **Notifications** — likes, comments, new followers, follow requests
-- **Block / report** users and posts, with an admin **moderation dashboard**
+---
 
-### Polish & UX
-- Premium dark UI — gradient brand, glassmorphism, story-ring avatars, spring animations
-- **Light / dark theme** toggle (persisted, no flash)
-- Toasts, loading skeletons, image lightbox, broken-image fallbacks, optimistic UI, smooth page transitions
-- Fully responsive (mobile bottom nav + desktop top bar)
+## 📖 Table of contents
+1. [What you can do](#-what-you-can-do)
+2. [How it works (plain English)](#-how-it-works-plain-english)
+3. [Where the code lives](#-where-the-code-lives-a-map)
+4. [Run it yourself](#-run-it-yourself)
+5. [Environment variables](#-environment-variables)
+6. [Tech stack](#-tech-stack)
+7. [Good to know](#-good-to-know-limitations)
 
-### Security & hardening
-- Privacy-gated media (`/api/media`), magic-byte file validation, upload size limits
-- Rate limiting (in-memory, **Upstash Redis** when configured)
-- DM message text **AES-256-GCM encrypted at rest**
-- SEO / Open Graph link previews for public posts & profiles
+---
 
-## Tech stack
+## ✨ What you can do
+
+| Area | Features |
+|---|---|
+| **Accounts** | Email/password or **Sign in with Google** · forgot password via a **6-digit code emailed to you** · set a password later if you joined with Google |
+| **Profile** | Avatar, bio, display name, **change your @username** (old links still work) · **public or private** account |
+| **Following** | Follow public accounts instantly · private accounts get a **follow request** you approve/reject |
+| **Posting** | Photos & videos · **swipeable multi-image posts** (up to 10) · captions with **#hashtags** and **@mentions** · edit caption · delete |
+| **Feed & discovery** | Home feed (people you follow) · **Explore** (public posts) · **search** people · tap a hashtag to see all posts using it |
+| **Engaging** | **Like** (or double-tap the photo) · **comment** · **save** posts to a private collection |
+| **Messaging** | **Direct messages** (1:1), unread badge, live updates · messages are **encrypted in the database** |
+| **Safety** | **Block** or **report** users and posts · admins get a **moderation dashboard** |
+| **Notifications** | See who liked, commented, or followed you |
+| **Looks** | Premium dark theme · **light/dark toggle** · smooth animations, toasts, skeletons |
+
+---
+
+## 🧠 How it works (plain English)
+
+A quick tour of what happens behind each feature — no deep CS needed.
+
+### 🔑 Logging in
+When you log in, the server checks your password (stored **hashed**, never as plain text) and hands your browser a **signed token stored in a secure cookie**. Every page you open sends that cookie back, so the server knows it's you. Logging out just clears the cookie.
+*Google login* works the same way — Google verifies who you are, then we issue the same kind of cookie.
+
+### 🙈 Public vs private accounts
+Every time the app is about to show someone's posts, it runs one check: **"is this viewer allowed to see this?"** Public account → yes. Private account → only you or your approved followers. This single check (`canViewContent`) guards profiles, the feed, individual posts, and even the raw image files.
+
+### 🏠 The feed
+Your home feed is simply: **posts from people you follow + your own**, newest first. It loads 10 at a time and fetches more as you scroll ("cursor pagination"). Because the list is built only from accounts you follow, privacy is automatic.
+
+### 🖼️ Posting a photo
+You pick up to 10 files. The server doesn't trust the file's label — it **reads the first few bytes to confirm it's really an image/video** (so you can't sneak in a disguised file), checks the size, then stores it. Small setups keep the bytes in MongoDB; if a **Vercel Blob** store is connected, it uses that CDN instead — the app auto-detects which.
+
+### ❤️ Likes, comments, bookmarks
+These are tiny records linking *you* → *a post*. Liking is **optimistic**: the heart fills instantly while the request happens in the background, and quietly reverts if it fails. Double-tapping a photo triggers the big heart animation. Bookmarks are private — only you see your **Saved** tab.
+
+### 🔗 #hashtags and @mentions
+When a caption is shown, the app scans the text and turns `#sunset` into a link to that hashtag's page and `@ava` into a link to that profile. Hashtag pages just search captions for that tag.
+
+### 💬 Direct messages
+Each pair of people shares one **conversation**. When you send a message, it's **encrypted (AES-256-GCM) before being saved**, so the raw database only contains scrambled text — a database leak wouldn't expose your chats. The app decrypts it again only when showing it to you or the recipient. The chat refreshes every few seconds so new messages appear without a reload, and an **unread badge** shows in the nav.
+
+### 🚫 Blocking & reporting
+Blocking someone **removes the follow both ways** and hides you from each other everywhere — feed, search, profile, and DMs. Reports get saved to a queue that **admins review** at `/admin/reports` and dismiss once handled.
+
+### 🌗 Theme
+Your dark/light choice is saved in the browser. A tiny script applies it **before the page paints**, so you never see a flash of the wrong theme.
+
+---
+
+## 🗺️ Where the code lives (a map)
+
+```
+src/
+├─ app/                    # pages & API routes (Next.js App Router)
+│  ├─ page.tsx             # home feed
+│  ├─ login, signup, forgot-password   # auth screens
+│  ├─ [username]/          # a profile (+ followers / following)
+│  ├─ post/[id]/           # a single post
+│  ├─ explore, saved, tags/[tag], notifications, settings
+│  ├─ messages/            # DM inbox + a thread
+│  ├─ admin/reports/       # moderation dashboard
+│  └─ api/                 # all backend endpoints (auth, posts, follow,
+│                          #   messages, bookmark, block, report, media…)
+├─ components/             # UI pieces (PostCard, Thread, Avatar, Toast…)
+└─ lib/                    # the "brains" — reusable logic:
+   ├─ auth.ts              # login tokens & current user
+   ├─ access.ts           # who-can-see-what + block checks
+   ├─ posts.ts            # shaping posts for the UI
+   ├─ dm.ts + crypto.ts    # conversations + message encryption
+   ├─ storage.ts           # save/serve media (MongoDB or Blob)
+   ├─ ratelimit.ts, mailer.ts, validation.ts, admin.ts
+prisma/
+└─ schema.prisma          # the database shape (User, Post, Follow, Like,
+                          #   Comment, Bookmark, Block, Report, Conversation, Message…)
+```
+
+**Reading tip:** start at a page in `app/`, then follow the helpers it imports from `lib/`. For example `app/page.tsx` → `lib/posts.ts` → `lib/access.ts` shows the whole "build a private-aware feed" flow.
+
+---
+
+## 🚀 Run it yourself
+
+```bash
+npm install
+# create a .env file (see the table below)
+npm run db:push     # create the database tables/collections
+npm run seed        # optional: demo users + posts
+npm run dev         # open http://localhost:3000
+```
+
+You'll need a free **MongoDB Atlas** database for `DATABASE_URL`. Everything else is optional — the app degrades gracefully (e.g. reset codes print to the terminal until you add an email provider).
+
+---
+
+## 🔧 Environment variables
+
+Put these in `.env` locally and in your Vercel project settings. **Only the first two are required.**
+
+| Variable | Required | What it's for |
+|---|:---:|---|
+| `DATABASE_URL` | ✅ | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | Signs login tokens (also encrypts DMs if `DM_ENCRYPTION_KEY` isn't set) |
+| `GOOGLE_CLIENT_ID` · `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | – | "Sign in with Google" |
+| `EMAIL_USER` · `EMAIL_PASS` | – | Gmail App Password → sends reset-code emails |
+| `RESEND_API_KEY` · `EMAIL_FROM` | – | Resend (an easier alternative to Gmail) |
+| `BLOB_READ_WRITE_TOKEN` | – | Store uploads on Vercel Blob instead of MongoDB |
+| `UPSTASH_REDIS_REST_URL` · `UPSTASH_REDIS_REST_TOKEN` | – | Real rate-limiting across servers |
+| `DM_ENCRYPTION_KEY` | – | Dedicated key for encrypting DMs |
+| `ADMIN_EMAILS` | – | Comma-separated emails allowed into `/admin/reports` |
+| `NEXT_PUBLIC_SITE_URL` | – | Your URL, for nice link previews when sharing |
+
+> 🔒 `.env` is **gitignored** — your secrets never get pushed to GitHub. Set the same values in Vercel for the live site.
+
+---
+
+## 🧰 Tech stack
 
 | Layer | Choice |
 |---|---|
 | Framework | **Next.js 16** (App Router, Turbopack) + TypeScript |
 | Styling | **Tailwind CSS 4** |
-| ORM / DB | **Prisma 6** + **MongoDB Atlas** |
+| Database | **MongoDB Atlas** via **Prisma 6** |
 | Auth | JWT (`jose`) in httpOnly cookies + `bcryptjs` |
-| Media | MongoDB (bytes) or **Vercel Blob** (auto-detected) |
-| Email | Resend or Gmail SMTP (`nodemailer`) |
-| Rate limit | In-memory or Upstash Redis |
+| Media | MongoDB bytes **or** Vercel Blob (auto-detected) |
+| Email | Resend **or** Gmail SMTP (`nodemailer`) |
 | Hosting | Vercel |
 
-## Getting started
-
-```bash
-npm install
-# create .env with the values below
-npm run db:push           # push the Prisma schema to MongoDB
-npm run seed              # optional: demo users + posts
-npm run dev               # http://localhost:3000
-```
-
-### Environment variables (`.env`)
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `DATABASE_URL` | ✅ | MongoDB Atlas connection string |
-| `JWT_SECRET` | ✅ | Signs auth tokens (also derives the DM key if `DM_ENCRYPTION_KEY` is unset) |
-| `GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | – | Sign in with Google |
-| `EMAIL_USER` / `EMAIL_PASS` | – | Gmail App Password for reset emails |
-| `RESEND_API_KEY` / `EMAIL_FROM` | – | Resend (alternative to Gmail) |
-| `BLOB_READ_WRITE_TOKEN` | – | Use Vercel Blob for uploads (else MongoDB) |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | – | Distributed rate limiting |
-| `DM_ENCRYPTION_KEY` | – | Dedicated key for DM encryption at rest |
-| `ADMIN_EMAILS` | – | Comma-separated emails that can access `/admin/reports` |
-| `NEXT_PUBLIC_SITE_URL` | – | Canonical URL for Open Graph previews |
-
-> `.env` is gitignored — keep all secrets there and in your Vercel project settings, never in git.
-
-## Scripts
-
-| Command | Description |
+### Scripts
+| Command | Does |
 |---|---|
-| `npm run dev` | Start the dev server |
-| `npm run build` | `prisma generate` + production build |
-| `npm run db:push` | Push schema to MongoDB |
-| `npm run seed` | Seed demo data |
+| `npm run dev` | Start the local dev server |
+| `npm run build` | Generate Prisma client + production build |
+| `npm run db:push` | Sync the schema to MongoDB |
+| `npm run seed` | Load demo data |
 
-## Notes
-- MongoDB has no DB-level cascades — relational cleanup is handled in app code.
-- DMs poll every 4s (simple + reliable on serverless); swap for SSE/websockets for true real-time.
-- The light theme is a CSS remap of the dark palette, not a full per-component variant.
+---
+
+## ⚠️ Good to know (limitations)
+- **DMs are encrypted at rest, but not end-to-end** — the server can technically decrypt them (it protects against a database leak, not a determined server admin).
+- **DMs update by polling every 4s**, not instant push — simple and reliable on serverless; true real-time needs websockets.
+- **Light theme** is a CSS remap of the dark palette, so a rare spot may look slightly off.
+- **MongoDB has no automatic cascade deletes** — when something is removed, the app cleans up related records in code.
