@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
+import { decryptText } from "@/lib/crypto";
 
 // GET /api/messages — my conversations (other participant + last message + unread count).
 export async function GET() {
@@ -37,7 +38,7 @@ export async function GET() {
         username: other.username,
         displayName: other.displayName,
         avatarUrl: other.avatarUrl,
-        lastText: last?.text ?? null,
+        lastText: last ? decryptText(last.text) : null,
         lastAt: last?.createdAt ?? c.updatedAt,
         lastFromMe: last ? last.senderId === me : false,
         unread,

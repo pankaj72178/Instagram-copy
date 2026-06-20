@@ -1,7 +1,33 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/auth";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}): Promise<Metadata> {
+  const { username } = await params;
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: { username: true, displayName: true, bio: true, avatarUrl: true },
+  });
+  if (!user) return { title: "Profile" };
+  const title = `${user.displayName} (@${user.username})`;
+  const description = user.bio?.slice(0, 160) || `See @${user.username}’s photos and videos on Folo.`;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      ...(user.avatarUrl ? { images: [user.avatarUrl] } : {}),
+    },
+  };
+}
 import { getFollowState, followsMe, canViewContent, areBlocked } from "@/lib/access";
 import FollowButton from "@/components/FollowButton";
 import PostGrid from "@/components/PostGrid";

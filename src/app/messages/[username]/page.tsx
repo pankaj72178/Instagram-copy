@@ -4,6 +4,7 @@ import { getSessionUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { areBlocked } from "@/lib/access";
 import { findConversation } from "@/lib/dm";
+import { decryptText } from "@/lib/crypto";
 import Thread from "@/components/Thread";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export default async function ThreadPage({
     });
     initialMessages = rows.map((m) => ({
       id: m.id,
-      text: m.text,
+      text: decryptText(m.text),
       mine: m.senderId === me,
       createdAt: m.createdAt.toISOString(),
     }));

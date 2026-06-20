@@ -1,183 +1,88 @@
-# 📸 Folo
+# Folo
 
-Access Link: https://instagram-copy-beta.vercel.app
+A full-stack, Instagram-style social app — built with the Next.js App Router, TypeScript, Tailwind CSS, Prisma, and MongoDB.
 
-**Folo** is a full-stack, Instagram-style social media app — share photos and videos, follow people (with public/private accounts + follow requests), like and comment, and browse a personalized feed. Built with original branding.
+**Live:** https://instagram-copy-beta.vercel.app
 
-> ⚠️ Built **incrementally, phase by phase.** See [Build progress](#-build-progress) for what's done so far.
+## Features
 
----
+### Social
+- **Auth** — email/password, **Sign in with Google**, JWT in httpOnly cookies, bcrypt hashing
+- **Password reset** via emailed **6-digit OTP** (Gmail SMTP or Resend)
+- **Profiles** — editable username (with old-link redirects), display name, bio, avatar, public/private toggle
+- **Follows** — instant for public accounts, **follow requests** + approve for private
+- **Posts** — photos & videos, **multi-image carousel** (up to 10), captions, edit caption, delete
+- **Feed** — people you follow + yourself, cursor pagination, privacy-enforced
+- **Explore** — recent posts from public accounts + **user search**
+- **Likes** (double-tap with heart-burst), **comments**
+- **Bookmarks** + a private **Saved** tab
+- **@mentions & #hashtags** — clickable, with hashtag pages
+- **Direct messages** — 1:1 chats, unread badges, live polling, **encrypted at rest**
+- **Notifications** — likes, comments, new followers, follow requests
+- **Block / report** users and posts, with an admin **moderation dashboard**
 
-## 🧱 Tech stack
+### Polish & UX
+- Premium dark UI — gradient brand, glassmorphism, story-ring avatars, spring animations
+- **Light / dark theme** toggle (persisted, no flash)
+- Toasts, loading skeletons, image lightbox, broken-image fallbacks, optimistic UI, smooth page transitions
+- Fully responsive (mobile bottom nav + desktop top bar)
 
-| Layer | Tech |
-|-------|------|
-| Framework | **Next.js 16** (App Router) + **TypeScript** |
+### Security & hardening
+- Privacy-gated media (`/api/media`), magic-byte file validation, upload size limits
+- Rate limiting (in-memory, **Upstash Redis** when configured)
+- DM message text **AES-256-GCM encrypted at rest**
+- SEO / Open Graph link previews for public posts & profiles
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Framework | **Next.js 16** (App Router, Turbopack) + TypeScript |
 | Styling | **Tailwind CSS 4** |
-| Database | **Prisma 7** ORM + **SQLite** (local dev) |
-| Auth | **JWT** in **httpOnly cookies** (`jose`), passwords hashed with **bcrypt** |
-| Validation | **react-hook-form** + **zod** |
-| Media | Local filesystem (`/public/uploads`) in dev — storage logic isolated for easy S3/Cloudinary swap later |
+| ORM / DB | **Prisma 6** + **MongoDB Atlas** |
+| Auth | JWT (`jose`) in httpOnly cookies + `bcryptjs` |
+| Media | MongoDB (bytes) or **Vercel Blob** (auto-detected) |
+| Email | Resend or Gmail SMTP (`nodemailer`) |
+| Rate limit | In-memory or Upstash Redis |
+| Hosting | Vercel |
 
-**Designed to scale:** the SQLite datasource and the local file storage are each isolated so you can switch to **PostgreSQL** and **S3/Cloudinary** later with minimal changes.
+## Getting started
 
----
-
-## 🚀 Getting started
-
-### 1. Install dependencies
 ```bash
 npm install
+# create .env with the values below
+npm run db:push           # push the Prisma schema to MongoDB
+npm run seed              # optional: demo users + posts
+npm run dev               # http://localhost:3000
 ```
 
-### 2. Set up the database + seed demo data
-```bash
-npm run db:reset     # creates the SQLite DB and applies migrations
-npm run seed         # adds demo users, posts, follows, likes, comments
-```
-> `npm run seed` also generates placeholder avatars/photos into `/public/uploads`.
+### Environment variables (`.env`)
 
-### 3. Run the app
-```bash
-npm run dev
-```
-Open **http://localhost:3000**.
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | ✅ | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | Signs auth tokens (also derives the DM key if `DM_ENCRYPTION_KEY` is unset) |
+| `GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | – | Sign in with Google |
+| `EMAIL_USER` / `EMAIL_PASS` | – | Gmail App Password for reset emails |
+| `RESEND_API_KEY` / `EMAIL_FROM` | – | Resend (alternative to Gmail) |
+| `BLOB_READ_WRITE_TOKEN` | – | Use Vercel Blob for uploads (else MongoDB) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | – | Distributed rate limiting |
+| `DM_ENCRYPTION_KEY` | – | Dedicated key for DM encryption at rest |
+| `ADMIN_EMAILS` | – | Comma-separated emails that can access `/admin/reports` |
+| `NEXT_PUBLIC_SITE_URL` | – | Canonical URL for Open Graph previews |
 
-That's it — one documented flow to a working app.
+> `.env` is gitignored — keep all secrets there and in your Vercel project settings, never in git.
 
----
+## Scripts
 
-## 🔑 Demo login credentials
+| Command | Description |
+|---|---|
+| `npm run dev` | Start the dev server |
+| `npm run build` | `prisma generate` + production build |
+| `npm run db:push` | Push schema to MongoDB |
+| `npm run seed` | Seed demo data |
 
-All demo users share the password: **`password123`**
-
-| Username | Email | Account type |
-|----------|-------|--------------|
-| `ava`  | ava@folo.test  | 🌐 Public |
-| `ben`  | ben@folo.test  | 🌐 Public |
-| `cara` | cara@folo.test | 🔒 Private |
-| `dan`  | dan@folo.test  | 🔒 Private |
-
-The seed also sets up a realistic mix of relationships:
-- Mutual follows between `ava` and `ben`
-- `ava` is an **approved follower** of private `cara`
-- `ben` has a **pending follow request** to private `cara`
-- `ava` has a **pending request** to private `dan`
-
-…so you can immediately test public feeds, private accounts, and follow requests.
-
----
-
-## 📜 npm scripts
-
-| Command | What it does |
-|---------|--------------|
-| `npm run dev` | Start the dev server (http://localhost:3000) |
-| `npm run build` | Production build |
-| `npm run start` | Run the production build |
-| `npm run seed` | Wipe & reseed the database with demo data |
-| `npm run db:reset` | Reset migrations + database |
-
----
-
-## ⚙️ Environment variables
-
-A default `.env` with `DATABASE_URL` is created by Prisma. You'll add `JWT_SECRET` in Phase 2:
-
-```bash
-# SQLite database (local dev)
-DATABASE_URL="file:./dev.db"
-
-# Secret used to sign JWT auth tokens (Phase 2 — use a long random string)
-JWT_SECRET="replace-with-a-long-random-secret"
-```
-
-Generate a strong `JWT_SECRET`:
-```bash
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-```
-
-> `.env` and the SQLite database are gitignored — never commit them.
-
-### Switching to PostgreSQL later
-1. In `prisma/schema.prisma`, change the datasource `provider` from `sqlite` to `postgresql`.
-2. Point `DATABASE_URL` at your Postgres connection string.
-3. Swap the driver adapter in `src/lib/prisma.ts` (`@prisma/adapter-better-sqlite3` → `@prisma/adapter-pg`).
-4. Run `npx prisma migrate dev`.
-
----
-
-## 🗂️ Project structure (so far)
-
-```
-folo/
-├── prisma/
-│   ├── schema.prisma        # User, Post, Follow, Like, Comment models
-│   ├── migrations/          # SQL migrations
-│   └── seed.ts              # demo users + posts + follows + media
-├── public/
-│   └── uploads/             # uploaded/seeded media (dev storage)
-├── src/
-│   ├── app/                 # Next.js App Router pages
-│   ├── generated/prisma/    # generated Prisma client (gitignored)
-│   └── lib/
-│       └── prisma.ts        # Prisma client singleton (DB access isolated here)
-└── README.md
-```
-
----
-
-## 🧩 Data model
-
-- **User** — `username` (unique), `displayName`, `email` (unique), `passwordHash`, `avatarUrl`, `bio`, `isPrivate`, timestamps
-- **Post** — `authorId`, `mediaUrl`, `mediaType` (`IMAGE` | `VIDEO`), `caption`, timestamps
-- **Follow** — `followerId`, `followingId`, `status` (`PENDING` | `ACCEPTED`) — **unique per (follower → following)** pair
-- **Like** — `userId`, `postId` — **unique per (user, post)**
-- **Comment** — `userId`, `postId`, `text`, timestamp
-
-> SQLite has no native enums, so `status`/`mediaType` are stored as validated strings (enforced in app code with zod). The schema is otherwise Postgres-ready.
-
----
-
-## ✨ Features (target)
-
-- 🔐 Auth — sign up, log in, log out; protected routes
-- 👤 Profiles — avatar, bio, post grid, follower/following counts; edit profile; public/private toggle
-- 🔁 Follow system — instant follow for public accounts; **follow requests** for private; Accept/Reject; button states (Follow / Requested / Following / Follow Back); unfollow & cancel request
-- 🔒 Privacy — private accounts' posts/followers/following visible only to approved followers
-- 🖼️ Posts — upload photo **or** video with caption; type + size validation; delete own posts
-- 🏠 Feed — posts from people you follow + your own, newest first, paginated
-- ❤️ Engagement — like/unlike, comment, delete own comments
-- 🧭 Explore — recent posts from public accounts
-- 🔔 Notifications — follow requests, recent follows & likes
-
----
-
-## 📈 Build progress — ✅ all phases complete
-
-- [x] **Phase 1** — Project setup, Prisma schema, migrations, seed script
-- [x] **Phase 2** — Auth (signup, login, logout, JWT cookies, route protection)
-- [x] **Phase 3** — Profiles + public/private toggle
-- [x] **Phase 4** — Follow system + requests (Follow / Requested / Following / Follow back)
-- [x] **Phase 5** — Post upload (photo + video) + delete + grid
-- [x] **Phase 6** — Home feed + privacy enforcement
-- [x] **Phase 7** — Likes + comments
-- [x] **Phase 8** — Explore + notifications
-- [x] **Phase 9** — Polish (responsive nav, loading/empty states, validation, a11y)
-
-## 🗺️ Routes
-
-| Page | Route |
-|------|-------|
-| Feed / landing | `/` |
-| Login / Signup | `/login`, `/signup` |
-| Profile | `/[username]` |
-| Single post | `/post/[id]` |
-| Upload | `/upload` |
-| Explore | `/explore` |
-| Activity | `/notifications` |
-| Edit profile | `/settings` |
-
----
-
-_Folo is an original project and is not affiliated with any existing social network._
+## Notes
+- MongoDB has no DB-level cascades — relational cleanup is handled in app code.
+- DMs poll every 4s (simple + reliable on serverless); swap for SSE/websockets for true real-time.
+- The light theme is a CSS remap of the dark palette, not a full per-component variant.

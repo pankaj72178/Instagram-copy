@@ -169,6 +169,22 @@ export default function PostCard({
     }
   }
 
+  async function reportPost() {
+    const reason = window.prompt("Report this post? Optionally add a reason:");
+    if (reason === null) return;
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetType: "post", targetId: post.id, reason }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Report submitted. Thanks for keeping Folo safe.");
+    } catch {
+      toast.error("Couldn't submit the report");
+    }
+  }
+
   async function deletePost() {
     if (!confirm("Delete this post?")) return;
     const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
@@ -189,7 +205,7 @@ export default function PostCard({
           <span className="text-sm font-semibold">{post.author.username}</span>
         </Link>
         <span className="text-xs text-zinc-400">· {timeAgo(post.createdAt)}</span>
-        {post.isOwner && (
+        {post.isOwner ? (
           <div className="ml-auto flex items-center gap-3">
             <button
               onClick={() => {
@@ -204,6 +220,10 @@ export default function PostCard({
               Delete
             </button>
           </div>
+        ) : (
+          <button onClick={reportPost} className="ml-auto text-xs font-medium text-zinc-400 hover:text-red-500">
+            Report
+          </button>
         )}
       </div>
 

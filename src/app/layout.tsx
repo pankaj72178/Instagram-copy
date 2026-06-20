@@ -17,9 +17,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  title: "Folo",
+  metadataBase: new URL(siteUrl),
+  title: { default: "Folo", template: "%s · Folo" },
   description: "Folo — share moments with the people you follow.",
+  openGraph: { siteName: "Folo", type: "website" },
 };
 
 // Folo is personalized + real-time — render everything at request time so the
@@ -44,6 +50,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>

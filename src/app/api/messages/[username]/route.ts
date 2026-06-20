@@ -4,6 +4,7 @@ import { getSessionUserId } from "@/lib/auth";
 import { areBlocked } from "@/lib/access";
 import { findConversation, getOrCreateConversation } from "@/lib/dm";
 import { rateLimit } from "@/lib/ratelimit";
+import { encryptText, decryptText } from "@/lib/crypto";
 
 async function resolve(req: Request, username: string) {
   const me = await getSessionUserId();
@@ -43,7 +44,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ usernam
   return NextResponse.json({
     messages: messages.map((m) => ({
       id: m.id,
-      text: m.text,
+      text: decryptText(m.text),
       mine: m.senderId === me,
       createdAt: m.createdAt.toISOString(),
     })),
@@ -67,13 +68,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ usernam
 
   const convoId = await getOrCreateConversation(me, otherId);
   const msg = await prisma.message.create({
-    data: { conversationId: convoId, senderId: me, text: clean },
-    select: { id: true, text: true, createdAt: true },
+    data: { conversationId: convoId, senderId: me, text: encryptText(clean) },
+    select: { id: true, createdAt: true },
   });
   // Bump conversation for inbox ordering.
   await prisma.conversation.update({ where: { id: convoId }, data: { updatedAt: new Date() } });
 
   return NextResponse.json({
-    message: { id: msg.id, text: msg.text, mine: true, createdAt: msg.createdAt.toISOString() },
+    message: { id: msg.id, text: clean, mine: true, createdAt: msg.createdAt.toISOString() },
   });
 }

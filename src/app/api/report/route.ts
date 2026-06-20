@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionUserId } from "@/lib/auth";
+import { getSessionUserId, getCurrentUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { rateLimit } from "@/lib/ratelimit";
 
 // POST /api/report { targetType: "user"|"post", targetId, reason? }
@@ -28,5 +29,17 @@ export async function POST(req: Request) {
       reason: (reason ?? "").trim().slice(0, 500) || null,
     },
   });
+  return NextResponse.json({ ok: true });
+}
+
+// DELETE /api/report { id } — admins dismiss/resolve a report.
+export async function DELETE(req: Request) {
+  const me = await getCurrentUser();
+  if (!me || !isAdminEmail(me.email)) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+  }
+  const { id } = (await req.json().catch(() => ({}))) as { id?: string };
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  await prisma.report.deleteMany({ where: { id } });
   return NextResponse.json({ ok: true });
 }

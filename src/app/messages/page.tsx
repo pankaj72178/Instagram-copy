@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSessionUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { timeAgo } from "@/lib/format";
+import { decryptText } from "@/lib/crypto";
 import Avatar from "@/components/Avatar";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export default async function MessagesPage() {
                   <span className="flex items-center justify-between gap-2">
                     <span className={`truncate text-sm ${unread ? "font-semibold text-zinc-100" : "text-zinc-500"}`}>
                       {last.senderId === me ? "You: " : ""}
-                      {last.text}
+                      {decryptText(last.text)}
                     </span>
                     {unread > 0 && (
                       <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-xs font-bold text-white">
