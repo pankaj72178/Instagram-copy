@@ -83,6 +83,36 @@ export async function generateAltText(base64: string, mime: string): Promise<str
   }
 }
 
+/** Suggest relevant hashtags from a caption and/or image. Returns names without "#". */
+export async function suggestHashtags(opts: {
+  caption?: string;
+  base64?: string;
+  mime?: string;
+}): Promise<string[] | null> {
+  const c = getClient();
+  if (!c) return null;
+  try {
+    const content: Anthropic.ContentBlockParam[] = [];
+    const media = opts.mime ? asImageMime(opts.mime) : null;
+    if (opts.base64 && media) {
+      content.push({ type: "image", source: { type: "base64", media_type: media, data: opts.base64 } });
+    }
+    content.push({
+      type: "text",
+      text: `Suggest 5–8 relevant, popular hashtags${
+        opts.caption ? ` for this caption: "${opts.caption}"` : " for this image"
+      }. Return ONLY a JSON array of strings, no "#" symbols.`,
+    });
+    const msg = await c.messages.create({ model: MODEL, max_tokens: 150, messages: [{ role: "user", content }] });
+    const raw = firstText(msg);
+    const arr = JSON.parse(raw.slice(raw.indexOf("["), raw.lastIndexOf("]") + 1)) as string[];
+    return arr.map((s) => String(s).replace(/^#/, "").trim()).filter(Boolean).slice(0, 8);
+  } catch (e) {
+    console.error("suggestHashtags failed:", e);
+    return null;
+  }
+}
+
 /** Moderate user text. Returns {flagged, reason} or null if AI is off / fails (fail-open). */
 export async function moderateText(
   text: string

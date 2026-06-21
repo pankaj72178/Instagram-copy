@@ -18,6 +18,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (comment.userId !== me && comment.post.authorId !== me) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
-  await prisma.comment.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+  // Remove the comment's replies + all likes, then the comment itself.
+  const replies = await prisma.comment.findMany({ where: { parentId: id }, select: { id: true } });
+  const ids = [id, ...replies.map((r) => r.id)];
+  await prisma.commentLike.deleteMany({ where: { commentId: { in: ids } } });
+  await prisma.comment.deleteMany({ where: { id: { in: ids } } });
+  return NextResponse.json({ ok: true, removed: ids.length });
 }

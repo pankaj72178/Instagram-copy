@@ -57,14 +57,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     );
   }
 
-  const comment = await prisma.comment.create({
-    data: { postId: id, userId: me, text: parsed.data.text },
+  // Optional reply target — must be a top-level comment on this same post.
+  let parentId: string | null = null;
+  const rawParent = (body as { parentId?: string }).parentId;
+  if (rawParent) {
+    const parent = await prisma.comment.findUnique({
+      where: { id: rawParent },
+      select: { postId: true, parentId: true },
+    });
+    if (parent && parent.postId === id) parentId = parent.parentId ?? rawParent;
+  }
+
+  const created = await prisma.comment.create({
+    data: { postId: id, userId: me, text: parsed.data.text, parentId },
     select: {
       id: true,
       text: true,
       createdAt: true,
+      parentId: true,
       user: { select: { username: true, avatarUrl: true } },
     },
   });
+  const comment = { ...created, likeCount: 0, likedByMe: false };
   return NextResponse.json({ comment }, { status: 201 });
 }

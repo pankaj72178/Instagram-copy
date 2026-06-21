@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { acceptedFollowingIds } from "@/lib/access";
 import { loadPostCards } from "@/lib/posts";
 import Feed from "@/components/Feed";
+import SuggestedFollows from "@/components/SuggestedFollows";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -40,14 +41,15 @@ export default async function Home() {
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
       {page.length === 0 ? (
-        <div className="rounded-2xl bg-zinc-900 p-10 text-center ring-1 ring-zinc-800">
-          <p className="text-lg font-semibold">Your feed is empty</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            Follow people on{" "}
-            <Link href="/explore" className="font-semibold text-indigo-400 hover:underline">Explore</Link>{" "}
-            or{" "}
-            <Link href="/upload" className="font-semibold text-indigo-400 hover:underline">share your first post</Link>.
-          </p>
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-zinc-900 p-10 text-center ring-1 ring-zinc-800">
+            <p className="text-lg font-semibold">Your feed is empty</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Follow people below or{" "}
+              <Link href="/upload" className="font-semibold text-indigo-400 hover:underline">share your first post</Link>.
+            </p>
+          </div>
+          <SuggestedFollows limit={6} />
         </div>
       ) : (
         <Feed initialPosts={page} initialCursor={nextCursor} myUsername={user.username} />

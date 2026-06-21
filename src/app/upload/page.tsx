@@ -42,6 +42,7 @@ export default function UploadPage() {
   const [busy, setBusy] = useState(false);
   const [aiOn, setAiOn] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  const [tagging, setTagging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -71,6 +72,33 @@ export default function UploadPage() {
       setCaption(data.caption);
     } finally {
       setSuggesting(false);
+    }
+  }
+
+  async function suggestHashtags() {
+    setTagging(true);
+    setError("");
+    try {
+      const img = items.find((it) => !it.isVideo);
+      const body: { caption?: string; image?: string; mime?: string } = { caption };
+      if (img) {
+        body.image = await fileToBase64(img.file);
+        body.mime = img.file.type;
+      }
+      const res = await fetch("/api/ai/hashtags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Couldn't suggest hashtags.");
+        return;
+      }
+      const tags = (data.hashtags as string[]).map((h) => `#${h}`).join(" ");
+      setCaption((c) => (c ? `${c.trimEnd()}\n\n${tags}` : tags));
+    } finally {
+      setTagging(false);
     }
   }
 
@@ -176,15 +204,27 @@ export default function UploadPage() {
         )}
 
         <div>
-          {aiOn && items.some((it) => !it.isVideo) && (
-            <button
-              type="button"
-              onClick={suggestCaption}
-              disabled={suggesting}
-              className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-indigo-950 px-3 py-1.5 text-sm font-semibold text-indigo-300 ring-1 ring-indigo-900 hover:bg-indigo-900 disabled:opacity-60"
-            >
-              {suggesting ? "Thinking…" : "✨ Suggest caption"}
-            </button>
+          {aiOn && (items.some((it) => !it.isVideo) || caption.trim()) && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {items.some((it) => !it.isVideo) && (
+                <button
+                  type="button"
+                  onClick={suggestCaption}
+                  disabled={suggesting}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-950 px-3 py-1.5 text-sm font-semibold text-indigo-300 ring-1 ring-indigo-900 hover:bg-indigo-900 disabled:opacity-60"
+                >
+                  {suggesting ? "Thinking…" : "✨ Suggest caption"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={suggestHashtags}
+                disabled={tagging}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-950 px-3 py-1.5 text-sm font-semibold text-indigo-300 ring-1 ring-indigo-900 hover:bg-indigo-900 disabled:opacity-60"
+              >
+                {tagging ? "Thinking…" : "# Suggest hashtags"}
+              </button>
+            </div>
           )}
           <textarea
             value={caption}

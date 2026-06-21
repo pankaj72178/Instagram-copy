@@ -8,6 +8,9 @@ export type CommentItem = {
   id: string;
   text: string;
   createdAt: string;
+  parentId: string | null;
+  likeCount: number;
+  likedByMe: boolean;
   user: { username: string; avatarUrl: string | null };
 };
 
@@ -55,11 +58,15 @@ export async function loadPostCards(
       bookmarks: { where: { userId: viewerId }, select: { id: true }, take: 1 },
       comments: {
         orderBy: { createdAt: opts.allComments ? "asc" : "desc" },
-        ...(opts.allComments ? {} : { take: opts.commentPreview ?? 2 }),
+        // Preview shows only top-level comments; the post page shows everything.
+        ...(opts.allComments ? {} : { where: { parentId: null }, take: opts.commentPreview ?? 2 }),
         select: {
           id: true,
           text: true,
           createdAt: true,
+          parentId: true,
+          _count: { select: { likes: true } },
+          likes: { where: { userId: viewerId }, select: { id: true }, take: 1 },
           user: { select: { username: true, avatarUrl: true } },
         },
       },
@@ -87,6 +94,9 @@ export async function loadPostCards(
         id: c.id,
         text: c.text,
         createdAt: c.createdAt.toISOString(),
+        parentId: c.parentId,
+        likeCount: c._count.likes,
+        likedByMe: c.likes.length > 0,
         user: c.user,
       })),
       isOwner: p.authorId === viewerId,

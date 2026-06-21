@@ -34,11 +34,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  posts     Post[]
-  likes     Like[]
-  comments  Comment[]
-  bookmarks Bookmark[]
-  reports   Report[]
+  posts        Post[]
+  likes        Like[]
+  comments     Comment[]
+  commentLikes CommentLike[]
+  bookmarks    Bookmark[]
+  collections  Collection[]
+  reports      Report[]
 
   following Follow[] @relation("follower")
   followers Follow[] @relation("following")
@@ -110,16 +112,19 @@ model Post {
 }
 
 model Bookmark {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  postId    String   @db.ObjectId
-  createdAt DateTime @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  postId       String   @db.ObjectId
+  // Optional collection (folder) this saved post belongs to.
+  collectionId String?  @db.ObjectId
+  createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([userId])
+  @@index([collectionId])
 }
 
 model Block {
@@ -183,12 +188,40 @@ model Comment {
   userId    String   @db.ObjectId
   postId    String   @db.ObjectId
   text      String
+  // Reply threading: null = top-level comment, else the parent comment id.
+  parentId  String?  @db.ObjectId
+  createdAt DateTime @default(now())
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post  Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likes CommentLike[]
+
+  @@index([postId])
+  @@index([parentId])
+}
+
+model CommentLike {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  commentId String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+}
+
+model Collection {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  name      String
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@index([postId])
+  @@index([userId])
 }
 
 // Uploaded media stored directly in MongoDB (works on Vercel's read-only FS

@@ -29,9 +29,11 @@ export async function DELETE(req: Request) {
   await prisma.like.deleteMany({
     where: { OR: [{ userId: me }, { postId: { in: postIds } }] },
   });
+  await prisma.commentLike.deleteMany({ where: { userId: me } });
   await prisma.comment.deleteMany({
     where: { OR: [{ userId: me }, { postId: { in: postIds } }] },
   });
+  await prisma.collection.deleteMany({ where: { userId: me } });
   await prisma.follow.deleteMany({
     where: { OR: [{ followerId: me }, { followingId: me }] },
   });

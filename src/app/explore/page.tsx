@@ -3,6 +3,7 @@ import { getSessionUserId } from "@/lib/auth";
 import { blockedUserIds } from "@/lib/access";
 import PostGrid from "@/components/PostGrid";
 import SearchBox from "@/components/SearchBox";
+import SuggestedFollows from "@/components/SuggestedFollows";
 
 // Always render at request time (never prerender at build → no DB needed during build).
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export default async function ExplorePage() {
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
       <h1 className="mb-4 text-xl font-bold">Explore</h1>
       <SearchBox />
+      <div className="mb-6">
+        <SuggestedFollows limit={6} />
+      </div>
       {posts.length === 0 ? (
         <p className="py-16 text-center text-sm text-zinc-400">No public posts yet.</p>
       ) : (

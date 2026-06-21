@@ -29,6 +29,7 @@ export default function PostCard({
   const [comments, setComments] = useState<CommentItem[]>(post.comments);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [text, setText] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [mediaBroken, setMediaBroken] = useState(false);
   const [zoomed, setZoomed] = useState(false);
@@ -148,17 +149,71 @@ export default function PostCard({
       const res = await fetch(`/api/posts/${post.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: value }),
+        body: JSON.stringify({ text: value, parentId: replyTo?.id }),
       });
       const data = await res.json();
       if (res.ok) {
         setComments((c) => [...c, data.comment]);
         setCommentCount((n) => n + 1);
         setText("");
+        setReplyTo(null);
       }
     } finally {
       setBusy(false);
     }
+  }
+
+  async function toggleCommentLike(cid: string) {
+    setComments((cs) =>
+      cs.map((c) =>
+        c.id === cid
+          ? { ...c, likedByMe: !c.likedByMe, likeCount: c.likeCount + (c.likedByMe ? -1 : 1) }
+          : c
+      )
+    );
+    const target = comments.find((c) => c.id === cid);
+    const willLike = target ? !target.likedByMe : true;
+    try {
+      const res = await fetch(`/api/comments/${cid}/like`, { method: willLike ? "POST" : "DELETE" });
+      if (!res.ok) throw new Error();
+    } catch {
+      // revert
+      setComments((cs) =>
+        cs.map((c) =>
+          c.id === cid
+            ? { ...c, likedByMe: !c.likedByMe, likeCount: c.likeCount + (c.likedByMe ? -1 : 1) }
+            : c
+        )
+      );
+    }
+  }
+
+  function startReply(cid: string, username: string) {
+    setReplyTo({ id: cid, username });
+    setText((t) => (t.startsWith(`@${username}`) ? t : `@${username} `));
+  }
+
+  function commentRow(c: CommentItem) {
+    return (
+      <div className="flex items-start gap-2 text-sm">
+        <span className="flex-1">
+          <Link href={`/${c.user.username}`} className="font-semibold">{c.user.username}</Link>{" "}
+          <Linkify text={c.text} />
+          <span className="mt-0.5 flex items-center gap-3 text-xs text-zinc-500">
+            {c.likeCount > 0 && <span>{c.likeCount} {c.likeCount === 1 ? "like" : "likes"}</span>}
+            <button onClick={() => startReply(c.id, c.user.username)} className="font-medium hover:text-zinc-300">Reply</button>
+            {(c.user.username === myUsername || post.isOwner) && (
+              <button onClick={() => deleteComment(c.id)} className="hover:text-red-500">Delete</button>
+            )}
+          </span>
+        </span>
+        <button onClick={() => toggleCommentLike(c.id)} aria-label={c.likedByMe ? "Unlike comment" : "Like comment"} className="mt-1 shrink-0">
+          <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 ${c.likedByMe ? "fill-red-500 text-red-500" : "fill-none text-zinc-400"}`} stroke="currentColor" strokeWidth="2">
+            <path d="M12 21s-7-4.6-9.3-9.2C1 8.5 2.7 5 6 5c2 0 3.2 1.2 4 2.3C10.8 6.2 12 5 14 5c3.3 0 5 3.5 3.3 6.8C19 16.4 12 21 12 21z" />
+          </svg>
+        </button>
+      </div>
+    );
   }
 
   async function deleteComment(id: string) {
@@ -384,32 +439,42 @@ export default function PostCard({
             View all {commentCount} comments
           </Link>
         )}
-        <ul className="mt-1 space-y-1">
-          {comments.map((c) => (
-            <li key={c.id} className="group flex items-start gap-1 text-sm">
-              <span className="flex-1">
-                <Link href={`/${c.user.username}`} className="font-semibold">{c.user.username}</Link>{" "}
-                <Linkify text={c.text} />
-              </span>
-              {(c.user.username === myUsername || post.isOwner) && (
-                <button onClick={() => deleteComment(c.id)} className="text-xs text-zinc-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500">
-                  ✕
-                </button>
-              )}
-            </li>
-          ))}
+        <ul className="mt-1 space-y-2">
+          {comments
+            .filter((c) => !c.parentId)
+            .map((c) => {
+              const replies = comments.filter((r) => r.parentId === c.id);
+              return (
+                <li key={c.id}>
+                  {commentRow(c)}
+                  {replies.length > 0 && (
+                    <ul className="ml-5 mt-1 space-y-1 border-l border-zinc-800 pl-3">
+                      {replies.map((r) => (
+                        <li key={r.id}>{commentRow(r)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
         </ul>
 
+        {replyTo && (
+          <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
+            <span>Replying to <b className="text-zinc-200">@{replyTo.username}</b></span>
+            <button onClick={() => { setReplyTo(null); setText(""); }} className="hover:text-zinc-200">Cancel</button>
+          </div>
+        )}
         <form onSubmit={addComment} className="mt-2 flex items-center gap-2">
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Add a comment…"
+            placeholder={replyTo ? `Reply to @${replyTo.username}…` : "Add a comment…"}
             maxLength={500}
             className="flex-1 rounded-full bg-zinc-800 px-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
           />
           <button type="submit" disabled={busy || !text.trim()} className="text-sm font-semibold text-indigo-400 disabled:opacity-40">
-            Post
+            {replyTo ? "Reply" : "Post"}
           </button>
         </form>
       </div>
