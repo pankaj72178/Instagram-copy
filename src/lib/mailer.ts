@@ -58,3 +58,21 @@ export async function sendPasswordOtp(to: string, code: string) {
     console.log(`🔑 Password reset code for ${to}: ${code}`);
   }
 }
+
+function verifyHtml(code: string) {
+  return `
+    <div style="font-family:system-ui,Arial,sans-serif;max-width:480px;margin:auto">
+      <h2 style="color:#6366f1">Confirm your email</h2>
+      <p>Welcome to Folo! Enter this code to verify your email. It expires in 15 minutes.</p>
+      <p style="font-size:34px;font-weight:800;letter-spacing:8px;color:#111;background:#f4f4f5;border-radius:12px;padding:16px;text-align:center">${code}</p>
+      <p style="color:#888;font-size:13px">If you didn't create a Folo account, you can ignore this email.</p>
+    </div>`;
+}
+
+// Sends the 6-digit email-verification code. Falls back to logging it in dev.
+export async function sendVerificationOtp(to: string, code: string) {
+  const sent = await deliver(to, "Confirm your Folo email", verifyHtml(code));
+  if (!sent) {
+    console.log(`✉️  Email verification code for ${to}: ${code}`);
+  }
+}

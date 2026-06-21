@@ -83,6 +83,7 @@ export async function getCurrentUser() {
       avatarUrl: true,
       bio: true,
       isPrivate: true,
+      emailVerified: true,
     },
   });
 }

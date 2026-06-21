@@ -56,6 +56,7 @@ export async function POST(req: Request) {
           displayName: payload?.name || email.split("@")[0],
           avatarUrl: payload?.picture || null,
           googleId: payload?.sub || null,
+          emailVerified: true, // Google already verified this email
         },
         select: { id: true, googleId: true },
       });

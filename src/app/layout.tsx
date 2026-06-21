@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Nav from "@/components/Nav";
 import { ToastProvider } from "@/components/Toast";
+import VerifyBanner from "@/components/VerifyBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,6 +65,7 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col bg-zinc-950 text-zinc-50">
         <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <ToastProvider>
+          {user && !user.emailVerified && <VerifyBanner />}
           <Nav user={user ? { username: user.username, avatarUrl: user.avatarUrl } : null} unread={unread} />
           {/* pb-20 leaves room for the mobile bottom nav */}
           <div className="flex flex-1 flex-col pb-20 md:pb-0">{children}</div>

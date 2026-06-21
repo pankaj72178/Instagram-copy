@@ -4,6 +4,7 @@ import { getSessionUserId } from "@/lib/auth";
 import { saveMedia } from "@/lib/storage";
 import { sniffMime } from "@/lib/filecheck";
 import { rateLimit } from "@/lib/ratelimit";
+import { aiEnabled, generateAltText, moderateText } from "@/lib/ai";
 import {
   IMAGE_TYPES,
   VIDEO_TYPES,
@@ -80,6 +81,20 @@ export async function POST(req: Request) {
     );
   }
 
+  // AI (best-effort): alt text for the first image + caption moderation.
+  let altText: string | null = null;
+  if (aiEnabled) {
+    const firstImage = validated.find((v) => v.type === "IMAGE");
+    try {
+      if (firstImage) {
+        const b64 = Buffer.from(await firstImage.file.arrayBuffer()).toString("base64");
+        altText = await generateAltText(b64, firstImage.file.type);
+      }
+    } catch (e) {
+      console.error("alt-text generation failed:", e);
+    }
+  }
+
   const post = await prisma.post.create({
     data: {
       authorId: me,
@@ -88,9 +103,29 @@ export async function POST(req: Request) {
       mediaUrls: urls,
       mediaTypes: types,
       caption,
+      altText,
     },
     select: { id: true },
   });
+
+  // Auto-moderate the caption; flagged posts are queued for admins.
+  if (aiEnabled && caption) {
+    try {
+      const verdict = await moderateText(caption);
+      if (verdict?.flagged) {
+        await prisma.report.create({
+          data: {
+            reporterId: me,
+            targetType: "post",
+            targetId: post.id,
+            reason: `AI auto-flag: ${verdict.reason}`.slice(0, 500),
+          },
+        });
+      }
+    } catch (e) {
+      console.error("moderation failed:", e);
+    }
+  }
 
   return NextResponse.json({ post }, { status: 201 });
 }

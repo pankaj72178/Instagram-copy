@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   MAX_IMAGE_BYTES,
@@ -8,6 +8,16 @@ import {
   MAX_IMAGE_MB,
   MAX_VIDEO_MB,
 } from "@/lib/validation";
+
+// Read a File as base64 (without the data: URL prefix).
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] || "");
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
 const MAX_ITEMS = 10;
 
@@ -30,7 +40,39 @@ export default function UploadPage() {
   const [caption, setCaption] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [aiOn, setAiOn] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/ai/status")
+      .then((r) => r.json())
+      .then((d) => setAiOn(!!d.enabled))
+      .catch(() => {});
+  }, []);
+
+  async function suggestCaption() {
+    const img = items.find((it) => !it.isVideo);
+    if (!img) return;
+    setSuggesting(true);
+    setError("");
+    try {
+      const base64 = await fileToBase64(img.file);
+      const res = await fetch("/api/ai/caption", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mime: img.file.type }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Couldn't suggest a caption.");
+        return;
+      }
+      setCaption(data.caption);
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     setError("");
@@ -133,14 +175,26 @@ export default function UploadPage() {
           </div>
         )}
 
-        <textarea
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Write a caption…  use #tags and @mentions"
-          rows={3}
-          maxLength={2200}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 outline-none focus:border-indigo-500"
-        />
+        <div>
+          {aiOn && items.some((it) => !it.isVideo) && (
+            <button
+              type="button"
+              onClick={suggestCaption}
+              disabled={suggesting}
+              className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-indigo-950 px-3 py-1.5 text-sm font-semibold text-indigo-300 ring-1 ring-indigo-900 hover:bg-indigo-900 disabled:opacity-60"
+            >
+              {suggesting ? "Thinking…" : "✨ Suggest caption"}
+            </button>
+          )}
+          <textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="Write a caption…  use #tags and @mentions"
+            rows={3}
+            maxLength={2200}
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 outline-none focus:border-indigo-500"
+          />
+        </div>
 
         <button type="submit" disabled={busy} className="btn-gradient w-full rounded-xl py-2.5 font-semibold text-white disabled:opacity-60">
           {busy ? "Sharing…" : "Share"}

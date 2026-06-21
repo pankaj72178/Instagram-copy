@@ -29,7 +29,8 @@ export default function SignupPage() {
       setServerError(data.error || "Sign up failed");
       return;
     }
-    router.push("/");
+    // New email/password accounts go straight to email verification.
+    router.push(data.needsVerification ? "/verify-email" : "/");
     router.refresh();
   }
 

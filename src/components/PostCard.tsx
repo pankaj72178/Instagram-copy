@@ -248,7 +248,7 @@ export default function PostCard({
           <img
             key={cur.url}
             src={cur.url}
-            alt={caption || `Post by ${post.author.username}`}
+            alt={post.altText || caption || `Post by ${post.author.username}`}
             onClick={onImageTap}
             onDoubleClick={(e) => e.preventDefault()}
             onError={() => setMediaBroken(true)}

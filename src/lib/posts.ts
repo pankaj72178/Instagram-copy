@@ -19,6 +19,7 @@ export type PostCardData = {
   mediaUrls: string[];
   mediaTypes: string[];
   caption: string | null;
+  altText: string | null;
   createdAt: string;
   likeCount: number;
   likedByMe: boolean;
@@ -45,6 +46,7 @@ export async function loadPostCards(
       mediaUrls: true,
       mediaTypes: true,
       caption: true,
+      altText: true,
       createdAt: true,
       authorId: true,
       author: { select: { username: true, avatarUrl: true } },
@@ -75,6 +77,7 @@ export async function loadPostCards(
       mediaUrls: p.mediaUrls.length ? p.mediaUrls : [p.mediaUrl],
       mediaTypes: p.mediaTypes.length ? p.mediaTypes : [p.mediaType],
       caption: p.caption,
+      altText: p.altText,
       createdAt: p.createdAt.toISOString(),
       likeCount: p._count.likes,
       likedByMe: p.likes.length > 0,

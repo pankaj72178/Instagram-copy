@@ -24,6 +24,10 @@ model User {
   bio          String?
   isPrivate    Boolean  @default(false)
   googleId     String?
+  // Email verification (6-digit code; only the hash is stored)
+  emailVerified  Boolean   @default(false)
+  verifyCodeHash String?
+  verifyCodeExp  DateTime?
   // Password-reset (hashed token + expiry)
   resetTokenHash String?
   resetTokenExp  DateTime?
@@ -92,6 +96,8 @@ model Post {
   mediaUrls  String[] @default([])
   mediaTypes String[] @default([])
   caption    String?
+  // AI-generated accessibility description for the first image.
+  altText    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

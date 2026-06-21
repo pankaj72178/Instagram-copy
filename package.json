@@ -11,6 +11,7 @@
     "db:push": "prisma db push"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
     "@hookform/resolvers": "^5.4.0",
     "@prisma/client": "^6.19.3",
     "@vercel/blob": "^2.4.0",
