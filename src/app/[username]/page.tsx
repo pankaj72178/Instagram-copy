@@ -119,6 +119,12 @@ export default async function ProfilePage({
                 >
                   Saved
                 </Link>
+                <Link
+                  href="/analytics"
+                  className="rounded-lg bg-zinc-800 px-4 py-1.5 text-sm font-semibold ring-1 ring-zinc-800 hover:bg-zinc-700"
+                >
+                  Analytics
+                </Link>
               </>
             ) : viewerId ? (
               <>

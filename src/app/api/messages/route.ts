@@ -20,7 +20,7 @@ export async function GET() {
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { text: true, senderId: true, createdAt: true },
+        select: { text: true, imageUrl: true, senderId: true, createdAt: true },
       },
     },
   });
@@ -38,7 +38,7 @@ export async function GET() {
         username: other.username,
         displayName: other.displayName,
         avatarUrl: other.avatarUrl,
-        lastText: last ? decryptText(last.text) : null,
+        lastText: last ? (last.text ? decryptText(last.text) : last.imageUrl ? "📷 Photo" : null) : null,
         lastAt: last?.createdAt ?? c.updatedAt,
         lastFromMe: last ? last.senderId === me : false,
         unread,

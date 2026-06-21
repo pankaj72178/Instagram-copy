@@ -21,7 +21,7 @@ export default async function ThreadPage({
 
   const other = await prisma.user.findUnique({
     where: { username },
-    select: { id: true, username: true, displayName: true, avatarUrl: true },
+    select: { id: true, username: true, displayName: true, avatarUrl: true, lastActiveAt: true },
   });
   if (!other) notFound();
   if (other.id === me) redirect("/messages");
@@ -40,7 +40,13 @@ export default async function ThreadPage({
 
   // Load existing messages (and mark the other person's as read).
   const convoId = await findConversation(me, other.id);
-  let initialMessages: { id: string; text: string; mine: boolean; createdAt: string }[] = [];
+  let initialMessages: {
+    id: string;
+    text: string;
+    imageUrl: string | null;
+    mine: boolean;
+    createdAt: string;
+  }[] = [];
   if (convoId) {
     await prisma.message.updateMany({
       where: { conversationId: convoId, senderId: other.id, read: false },
@@ -50,20 +56,24 @@ export default async function ThreadPage({
       where: { conversationId: convoId },
       orderBy: { createdAt: "asc" },
       take: 200,
-      select: { id: true, text: true, senderId: true, createdAt: true },
+      select: { id: true, text: true, imageUrl: true, senderId: true, createdAt: true },
     });
     initialMessages = rows.map((m) => ({
       id: m.id,
-      text: decryptText(m.text),
+      text: m.text ? decryptText(m.text) : "",
+      imageUrl: m.imageUrl,
       mine: m.senderId === me,
       createdAt: m.createdAt.toISOString(),
     }));
   }
 
+  const online = !!other.lastActiveAt && Date.now() - other.lastActiveAt.getTime() < 60_000;
+
   return (
     <Thread
       other={{ username: other.username, displayName: other.displayName, avatarUrl: other.avatarUrl }}
       initialMessages={initialMessages}
+      initialOnline={online}
     />
   );
 }

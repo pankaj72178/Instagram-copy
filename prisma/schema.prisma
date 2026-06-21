@@ -28,6 +28,8 @@ model User {
   emailVerified  Boolean   @default(false)
   verifyCodeHash String?
   verifyCodeExp  DateTime?
+  // Presence (online / last seen)
+  lastActiveAt   DateTime?
   // Password-reset (hashed token + expiry)
   resetTokenHash String?
   resetTokenExp  DateTime?
@@ -51,6 +53,38 @@ model User {
   conversationsA Conversation[] @relation("convA")
   conversationsB Conversation[] @relation("convB")
   sentMessages   Message[]
+
+  stories    Story[]
+  storyViews StoryView[]
+}
+
+// Ephemeral stories — auto-expire 24h after creation.
+model Story {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  authorId  String   @db.ObjectId
+  mediaUrl  String
+  mediaType String // "IMAGE" | "VIDEO"
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  author User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views  StoryView[]
+
+  @@index([authorId])
+  @@index([expiresAt])
+}
+
+model StoryView {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  storyId   String   @db.ObjectId
+  viewerId  String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewer User  @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, viewerId])
+  @@index([storyId])
 }
 
 // 1:1 conversation. The pair (userAId, userBId) is stored canonically
@@ -61,6 +95,9 @@ model Conversation {
   userBId   String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // Typing indicators (last time each participant was typing)
+  userATypingAt DateTime?
+  userBTypingAt DateTime?
 
   userA User @relation("convA", fields: [userAId], references: [id], onDelete: Cascade)
   userB User @relation("convB", fields: [userBId], references: [id], onDelete: Cascade)
@@ -77,7 +114,8 @@ model Message {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   conversationId String   @db.ObjectId
   senderId       String   @db.ObjectId
-  text           String
+  text           String   @default("")
+  imageUrl       String?
   read           Boolean  @default(false)
   createdAt      DateTime @default(now())
 

@@ -4,6 +4,7 @@ import { acceptedFollowingIds } from "@/lib/access";
 import { loadPostCards } from "@/lib/posts";
 import Feed from "@/components/Feed";
 import SuggestedFollows from "@/components/SuggestedFollows";
+import Stories from "@/components/Stories";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -40,6 +41,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
+      <Stories myUsername={user.username} myAvatar={user.avatarUrl} />
       {page.length === 0 ? (
         <div className="space-y-4">
           <div className="rounded-2xl bg-zinc-900 p-10 text-center ring-1 ring-zinc-800">

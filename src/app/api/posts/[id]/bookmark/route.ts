@@ -29,6 +29,29 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   return NextResponse.json({ bookmarked: true });
 }
 
+// PATCH /api/posts/:id/bookmark { collectionId } — move a saved post into a
+// collection (or null to un-file it).
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const me = await getSessionUserId();
+  if (!me) return NextResponse.json({ error: "Login required" }, { status: 401 });
+  const { id } = await params;
+
+  const { collectionId } = (await req.json().catch(() => ({}))) as { collectionId?: string | null };
+  let target: string | null = null;
+  if (collectionId) {
+    const col = await prisma.collection.findUnique({
+      where: { id: collectionId },
+      select: { userId: true },
+    });
+    if (!col || col.userId !== me) {
+      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+    }
+    target = collectionId;
+  }
+  await prisma.bookmark.updateMany({ where: { userId: me, postId: id }, data: { collectionId: target } });
+  return NextResponse.json({ ok: true, collectionId: target });
+}
+
 // DELETE /api/posts/:id/bookmark — unsave.
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const me = await getSessionUserId();

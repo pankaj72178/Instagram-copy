@@ -136,6 +136,15 @@ html.light body {
   transform: translateY(0) scale(0.99);
 }
 
+/* ---- Story progress bar ---- */
+@keyframes folo-storybar {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.story-progress {
+  animation: folo-storybar 5s linear forwards;
+}
+
 /* ---- Heart burst on double-tap ---- */
 @keyframes folo-heart-pop {
   0% {

@@ -25,7 +25,7 @@ export default async function MessagesPage() {
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { text: true, senderId: true, createdAt: true },
+        select: { text: true, imageUrl: true, senderId: true, createdAt: true },
       },
     },
   });
@@ -71,7 +71,7 @@ export default async function MessagesPage() {
                   <span className="flex items-center justify-between gap-2">
                     <span className={`truncate text-sm ${unread ? "font-semibold text-zinc-100" : "text-zinc-500"}`}>
                       {last.senderId === me ? "You: " : ""}
-                      {decryptText(last.text)}
+                      {last.text ? decryptText(last.text) : last.imageUrl ? "📷 Photo" : ""}
                     </span>
                     {unread > 0 && (
                       <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-xs font-bold text-white">
